@@ -35,7 +35,6 @@ smartStudyPlanner/
 	data/                     # JSON storage (users/plans)
 	requirements.txt
 	pyproject.toml
-	render.yaml               # Render deployment config
 ```
 
 ## Quick Start (Local)
@@ -82,17 +81,18 @@ No. GitHub Pages only serves static files, while this app needs a Python server.
 
 ### Recommended deployment: Render
 
-This repo includes `render.yaml` with:
+This repo includes a root-level `render.yaml` with:
 
 - `buildCommand: pip install -r requirements.txt`
 - `startCommand: gunicorn app:app`
-- Python version pinning
+- `rootDir: smartStudyPlanner`
+- Python version pinning (`PYTHON_VERSION`)
 
 Deploy steps:
 
 1. Push this repository to GitHub.
 2. In Render, create a new Web Service from that repo.
-3. Render auto-detects `render.yaml`.
+3. Render auto-detects `render.yaml` from the repository root.
 4. Deploy.
 
 ## Environment Variables

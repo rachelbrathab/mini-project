@@ -88,6 +88,22 @@ The app stores local data in JSON files:
 - `smartStudyPlanner/data/plans.json`
 - `smartStudyPlanner/data/user_stats.json` (created automatically when needed)
 
+## Deploy On Render
+
+This repository includes a root-level `render.yaml` configured for the Flask app in `smartStudyPlanner`.
+
+1. Push changes to GitHub.
+2. In Render, click **New +** > **Blueprint**.
+3. Connect this repository (`rachelbrathab/mini-project`).
+4. Render reads `render.yaml` and creates the web service automatically.
+
+Configured service details:
+
+- `rootDir: smartStudyPlanner`
+- `buildCommand: pip install -r requirements.txt`
+- `startCommand: gunicorn app:app`
+- `FLASK_SECRET_KEY` generated automatically by Render
+
 ## Notes
 
 - Keep `.venv` out of version control.
