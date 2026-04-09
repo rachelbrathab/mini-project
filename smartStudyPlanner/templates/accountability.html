@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card">
+    <h2>Accountability Mode</h2>
+    <p class="timer-meta">Use this summary to share outcomes with a study buddy.</p>
+
+    <p><strong>Enabled:</strong> {{ 'Yes' if stats.accountability_enabled else 'No' }}</p>
+    <p><strong>Buddy Email:</strong> {{ stats.buddy_email if stats.buddy_email else 'Not set' }}</p>
+    <p><strong>Current XP:</strong> {{ stats.xp }} | <strong>Level:</strong> {{ stats.level }}</p>
+
+    <div class="focus-panel">
+        <h3>Today Summary</h3>
+        <p id="summaryText">{{ summary }}</p>
+    </div>
+
+    {% if stats.buddy_email %}
+    <a class="button-link" href="mailto:{{ stats.buddy_email }}?subject=Study%20Accountability%20Update&body={{ summary|urlencode }}">Share via Email</a>
+    {% endif %}
+
+    <button type="button" onclick="copySummary()">Copy Summary</button>
+</div>
+
+<script>
+function copySummary() {
+    const text = document.getElementById('summaryText').innerText;
+    navigator.clipboard.writeText(text).then(() => {
+        alert('Summary copied to clipboard.');
+    });
+}
+</script>
+
+{% endblock %}

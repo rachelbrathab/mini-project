@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2>📅 Previous Plans</h2>
+
+<div class="card">
+    <h3>Consistency Snapshot</h3>
+    <div class="streak-grid">
+        <div class="streak-card">
+            <div class="streak-value">{{ streak_stats.current_streak }}</div>
+            <div class="streak-label">Current streak (days)</div>
+        </div>
+        <div class="streak-card">
+            <div class="streak-value">{{ streak_stats.best_streak }}</div>
+            <div class="streak-label">Best streak (days)</div>
+        </div>
+        <div class="streak-card">
+            <div class="streak-value">{{ streak_stats.weekly_consistency }}%</div>
+            <div class="streak-label">Weekly consistency</div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h3>Performance Snapshot</h3>
+    <div class="streak-grid">
+        <div class="streak-card">
+            <div class="streak-value">{{ analytics.total_productive_minutes }}</div>
+            <div class="streak-label">Productive minutes</div>
+        </div>
+        <div class="streak-card">
+            <div class="streak-value">{{ analytics.total_distractions }}</div>
+            <div class="streak-label">Distraction attempts</div>
+        </div>
+        <div class="streak-card">
+            <div class="streak-value">{{ user_stats.level }}</div>
+            <div class="streak-label">Current level</div>
+        </div>
+    </div>
+</div>
+
+{% for plan in plans %}
+    <div class="card">
+        <h4>{{ plan.date }}</h4>
+
+        <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 14px;">
+            <div class="check-item-pill">Study: {{ plan.study_minutes }} min</div>
+            <div class="check-item-pill">Break: {{ plan.break_minutes }} min</div>
+            <div class="check-item-pill">Study blocks: {{ plan.study_sessions }}</div>
+            <div class="check-item-pill">Break blocks: {{ plan.break_sessions }}</div>
+        </div>
+
+        <div class="progress-bar" style="margin-top: 0;">
+            <div class="history-progress-fill" style="width: {{ plan.progress_percent }}%;"></div>
+        </div>
+        <p class="timer-meta">Progress: {{ plan.completed_study_sessions }} of {{ plan.study_sessions }} study blocks ({{ plan.progress_percent }}%)</p>
+        <p class="reflection-text">🧠 Reflection: {{ plan.reflection }}</p>
+
+        <ul>
+            {% for s in plan.schedule %}
+                <li>
+                    {% if s.type == 'break' %}
+                        <strong>Break</strong>
+                    {% else %}
+                        <strong>{{ s.subject }}</strong>
+                    {% endif %}
+                    → {{ s.start }} - {{ s.end }}
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endfor %}
+
+<div class="card">
+    <h3>Subject-wise Study Sessions</h3>
+    {% if chart_labels %}
+    <canvas id="chart"></canvas>
+    {% else %}
+    <p>No subject data available yet.</p>
+    {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const labels = {{ chart_labels | tojson }};
+const values = {{ chart_data | tojson }};
+
+if (labels.length > 0) {
+    new Chart(document.getElementById("chart"), {
+        type: "bar",
+        data: {
+            labels: labels,
+            datasets: [{
+                label: "Sessions",
+                data: values,
+                backgroundColor: "rgba(33, 53, 55, 0.8)",
+                borderColor: "rgba(33, 53, 55, 1)",
+                borderWidth: 1
+            }]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        precision: 0
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+}
+</script>
+
+{% endblock %}

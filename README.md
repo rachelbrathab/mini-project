@@ -12,7 +12,7 @@ It includes:
 ```text
 Mini Project/
 	README.md
-	smart_study_planner/
+	smartStudyPlanner/
 		app.py
 		requirements.txt
 		pyproject.toml
@@ -25,7 +25,7 @@ Mini Project/
 
 ## Main Application
 
-The core app lives in `smart_study_planner`.
+The core app lives in `smartStudyPlanner`.
 
 Features include:
 
@@ -41,7 +41,7 @@ Features include:
 ### 1) Create and activate a Python virtual environment
 
 ```bash
-cd smart_study_planner
+cd smartStudyPlanner
 python3 -m venv ../.venv
 source ../.venv/bin/activate
 ```
@@ -70,26 +70,26 @@ Open in browser:
 
 ## Chrome Focus Extension (Local)
 
-Extension source is in `smart_study_planner/focus-extension`.
+Extension source is in `smartStudyPlanner/focus-extension`.
 
 To load it:
 
 1. Open Chrome and go to `chrome://extensions`
 2. Enable Developer Mode
 3. Click Load unpacked
-4. Select `smart_study_planner/focus-extension`
+4. Select `smartStudyPlanner/focus-extension`
 5. Reload after extension code changes
 
 ## Data Files
 
 The app stores local data in JSON files:
 
-- `smart_study_planner/data/users.json`
-- `smart_study_planner/data/plans.json`
-- `smart_study_planner/data/user_stats.json` (created automatically when needed)
+- `smartStudyPlanner/data/users.json`
+- `smartStudyPlanner/data/plans.json`
+- `smartStudyPlanner/data/user_stats.json` (created automatically when needed)
 
 ## Notes
 
 - Keep `.venv` out of version control.
 - This project currently uses local JSON storage, so it is best for local/demo use unless migrated to a database.
-- The detailed app-specific documentation is in `smart_study_planner/README.md`.
+- The detailed app-specific documentation is in `smartStudyPlanner/README.md`.

@@ -1,0 +1,568 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card">
+
+<h2>Current Schedule Checklist</h2>
+<p class="timer-meta">Only the recently generated study blocks are shown here.</p>
+
+{% if next_session %}
+<p class="next-session">Next up: <strong>{{ next_session.subject }}</strong> ({{ next_session.start }} - {{ next_session.end }})</p>
+{% endif %}
+
+<div id="remainingSessions">
+{% for s in schedule %}
+<div class="check-item" data-subject="{{ s.subject }}" data-start="{{ s.start }}" data-end="{{ s.end }}">
+<div class="check-item-main">
+<input type="checkbox" onchange="markSessionComplete(this)">
+<div>
+<div class="check-item-title">{{ s.subject }}</div>
+<div class="check-item-meta">{{ s.start }} - {{ s.end }}</div>
+</div>
+</div>
+<span class="check-item-pill">Study</span>
+</div>
+{% endfor %}
+</div>
+
+<h2>Progress</h2>
+
+<div class="progress-bar">
+<div id="progressFill"></div>
+</div>
+
+<p id="progressText">{{ percent }}%</p>
+<p class="timer-meta" id="progressSummary">{{ completed_sessions }} of {{ total_sessions }} study blocks complete</p>
+
+<div class="streak-grid">
+    <div class="streak-card">
+        <div class="streak-value">{{ streak_stats.current_streak }}</div>
+        <div class="streak-label">Current streak (days)</div>
+    </div>
+    <div class="streak-card">
+        <div class="streak-value">{{ streak_stats.best_streak }}</div>
+        <div class="streak-label">Best streak (days)</div>
+    </div>
+    <div class="streak-card">
+        <div class="streak-value">{{ streak_stats.weekly_consistency }}%</div>
+        <div class="streak-label">Weekly consistency</div>
+    </div>
+</div>
+
+<div class="xp-grid">
+    <div class="streak-card">
+        <div class="streak-value" id="xpTotal">{{ user_stats.xp }}</div>
+        <div class="streak-label">Total XP</div>
+    </div>
+    <div class="streak-card">
+        <div class="streak-value" id="xpLevel">{{ user_stats.level }}</div>
+        <div class="streak-label">Current level</div>
+    </div>
+    <div class="streak-card">
+        <div class="streak-value" id="xpRemaining">{{ xp_to_next_level }}</div>
+        <div class="streak-label">XP to next level</div>
+    </div>
+</div>
+
+<div class="focus-panel">
+<h3>Focus Mode</h3>
+<p class="timer-meta">Status: <span id="focusModeStatus" class="focus-status">{{ 'ON' if focus_state.focus_mode else 'OFF' }}</span></p>
+<p class="timer-meta">Study Session: <span id="sessionStatus" class="session-status">{{ 'ACTIVE' if focus_state.session_active else 'INACTIVE' }}</span></p>
+<p class="timer-meta">Policy: <span id="policyTag">{{ focus_state.policy_tag }}</span></p>
+<p class="timer-meta" id="focusRuleText"></p>
+<p class="timer-meta" id="focusHintText"></p>
+<p class="timer-meta">Hard Mode: <span id="hardModeFlag">{{ 'ON' if focus_state.hard_mode else 'OFF' }}</span> | Emergency uses left: <span id="emergencyRemaining">{{ focus_state.emergency_break_remaining }}</span></p>
+
+<div class="session-actions">
+    <button type="button" id="startSessionBtn" onclick="startStudySession()">Start Study Session</button>
+    <button type="button" id="endSessionBtn" onclick="endStudySession()">End Study Session</button>
+</div>
+</div>
+
+<div class="focus-panel">
+    <h3>Accountability</h3>
+    <p class="timer-meta" id="accountabilitySummary">{{ accountability_summary }}</p>
+    <a class="button-link" href="/accountability">Open Accountability View</a>
+</div>
+
+</div>
+
+<div class="card timer-card">
+<h2>Pomodoro Timer</h2>
+<p class="timer-meta" id="timerMeta">Study: {{ current_study_minutes }} min | Break: {{ pomodoro.break_minutes|default(10) }} min</p>
+<p class="timer-status" id="timerStatus">Ready to start</p>
+
+<div class="timer-display" id="timerDisplay">{{ "%02d"|format(current_study_minutes) }}:00</div>
+
+<div class="timer-actions">
+    <button type="button" onclick="startTimer('study')">Start Study</button>
+    <button type="button" onclick="startTimer('break')">Start Break</button>
+    <button type="button" onclick="pauseTimer()">Pause</button>
+    <button type="button" onclick="resetTimer()">Reset</button>
+</div>
+
+<div class="timer-actions timer-actions-single">
+    <button type="button" id="undoButton" onclick="undoLastSession()" {% if not session.get('completed_history') %}disabled{% endif %}>Undo Last Tick</button>
+</div>
+
+{% if next_session %}
+<p class="timer-meta">The current study block is removed from this list as soon as it finishes.</p>
+{% endif %}
+</div>
+
+<script>
+let studyMinutes = Number({{ current_study_minutes }});
+const breakMinutes = Number({{ pomodoro.break_minutes|default(10) }});
+let focusState = {{ focus_state | tojson }};
+
+let timerInterval = null;
+let remainingSeconds = studyMinutes * 60;
+let activeMode = 'study';
+let autoAdvanceTimeout = null;
+
+function updateTimerStatus(text) {
+    document.getElementById('timerStatus').innerText = text;
+}
+
+function formatTime(totalSeconds) {
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+}
+
+function renderTimer() {
+    document.getElementById('timerDisplay').innerText = formatTime(remainingSeconds);
+}
+
+function buildChecklistRow(item) {
+    const row = document.createElement('div');
+    row.className = 'check-item';
+    row.dataset.subject = item.subject;
+    row.dataset.start = item.start;
+    row.dataset.end = item.end;
+    row.innerHTML = `
+        <div class="check-item-main">
+            <input type="checkbox" onchange="markSessionComplete(this)">
+            <div>
+                <div class="check-item-title">${item.subject}</div>
+                <div class="check-item-meta">${item.start} - ${item.end}</div>
+            </div>
+        </div>
+        <span class="check-item-pill">Study</span>
+    `;
+    return row;
+}
+
+function getRowData(row) {
+    return {
+        subject: row.dataset.subject,
+        start: row.dataset.start,
+        end: row.dataset.end
+    };
+}
+
+function updateXpWidgets(data) {
+    if (typeof data.xp_total === 'number') {
+        const xpTotalEl = document.getElementById('xpTotal');
+        if (xpTotalEl) {
+            xpTotalEl.innerText = data.xp_total;
+        }
+
+        const levelEl = document.getElementById('xpLevel');
+        if (levelEl && typeof data.level === 'number') {
+            levelEl.innerText = data.level;
+        }
+
+        const nextThreshold = (Number(data.level || 1) * 120);
+        const xpRemaining = Math.max(0, nextThreshold - Number(data.xp_total || 0));
+        const xpRemainingEl = document.getElementById('xpRemaining');
+        if (xpRemainingEl) {
+            xpRemainingEl.innerText = xpRemaining;
+        }
+
+        if (Number(data.xp_earned || 0) > 0) {
+            let message = `Session complete: +${data.xp_earned} XP.`;
+            if (Number(data.completion_bonus || 0) > 0) {
+                message += ` Completion bonus +${data.completion_bonus} XP.`;
+            }
+            updateTimerStatus(message);
+        }
+    }
+}
+
+function updateChecklistProgress(data) {
+    document.getElementById('progressFill').style.width = data.percent + '%';
+    document.getElementById('progressText').innerText = data.percent + '%';
+
+    const progressSummary = document.getElementById('progressSummary');
+    if (progressSummary) {
+        progressSummary.innerText = `${data.completed_sessions} of ${data.total_sessions} study blocks complete`;
+    }
+
+    if (data.next_session) {
+        const nextSessionLabel = document.querySelector('.next-session');
+        if (nextSessionLabel) {
+            nextSessionLabel.innerHTML = `Next up: <strong>${data.next_session.subject}</strong> (${data.next_session.start} - ${data.next_session.end})`;
+        }
+
+        if (data.next_session.duration_minutes) {
+            studyMinutes = Number(data.next_session.duration_minutes);
+            updateTimerMeta();
+        }
+    } else {
+        const nextSessionLabel = document.querySelector('.next-session');
+        if (nextSessionLabel) {
+            nextSessionLabel.remove();
+        }
+    }
+
+    const undoButton = document.getElementById('undoButton');
+    if (undoButton) {
+        undoButton.disabled = !data.can_undo;
+    }
+
+    updateXpWidgets(data);
+
+    if (data.focus_state) {
+        renderFocusState(data.focus_state);
+    }
+}
+
+function setPlannerLocalState(state) {
+    localStorage.setItem('plannerFocusMode', state.focus_mode ? 'on' : 'off');
+    localStorage.setItem('plannerSessionActive', state.session_active ? 'active' : 'inactive');
+    localStorage.setItem('plannerProgressPercent', String(state.percent));
+    localStorage.setItem('plannerHasSchedule', state.has_schedule ? 'yes' : 'no');
+    localStorage.setItem('plannerActiveSubject', state.active_subject || '');
+    localStorage.setItem('plannerRewardActive', state.reward_active ? 'yes' : 'no');
+    localStorage.setItem('plannerRewardRemainingSeconds', String(state.reward_remaining_seconds || 0));
+    localStorage.setItem('plannerBlockedDomains', JSON.stringify(state.blocked_domains || []));
+    localStorage.setItem('plannerAllowedDomains', JSON.stringify(state.allowed_domains || []));
+    localStorage.setItem('plannerHardMode', state.hard_mode ? 'yes' : 'no');
+    localStorage.setItem('plannerEmergencyRemaining', String(state.emergency_break_remaining || 0));
+    localStorage.setItem('plannerPolicyTag', state.policy_tag || 'General Focus');
+}
+
+function renderFocusState(state) {
+    focusState = state;
+
+    const focusModeStatus = document.getElementById('focusModeStatus');
+    const sessionStatus = document.getElementById('sessionStatus');
+    const focusRuleText = document.getElementById('focusRuleText');
+    const focusHintText = document.getElementById('focusHintText');
+    const startButton = document.getElementById('startSessionBtn');
+    const endButton = document.getElementById('endSessionBtn');
+
+    if (focusModeStatus) {
+        focusModeStatus.innerText = state.focus_mode ? 'ON' : 'OFF';
+        focusModeStatus.classList.toggle('is-on', state.focus_mode);
+    }
+
+    if (sessionStatus) {
+        sessionStatus.innerText = state.session_active ? 'ACTIVE' : 'INACTIVE';
+        sessionStatus.classList.toggle('is-active', state.session_active);
+    }
+
+    const policyTag = document.getElementById('policyTag');
+    if (policyTag) {
+        policyTag.innerText = state.policy_tag || 'General Focus';
+    }
+
+    const hardModeFlag = document.getElementById('hardModeFlag');
+    if (hardModeFlag) {
+        hardModeFlag.innerText = state.hard_mode ? 'ON' : 'OFF';
+    }
+
+    const emergencyRemaining = document.getElementById('emergencyRemaining');
+    if (emergencyRemaining) {
+        emergencyRemaining.innerText = state.emergency_break_remaining || 0;
+    }
+
+    if (focusRuleText) {
+        if (!state.has_schedule) {
+            focusRuleText.innerText = 'Blocked: None (no schedule yet)';
+        } else if (state.reward_active) {
+            const minutes = Math.max(1, Math.ceil((state.reward_remaining_seconds || 0) / 60));
+            focusRuleText.innerText = `Reward break active: ${minutes} min unlocked`;
+        } else if (state.break_mode_active) {
+            focusRuleText.innerText = 'Pomodoro break window active: temporary unlock enabled';
+        } else if (!state.focus_mode) {
+            focusRuleText.innerText = 'Blocked: None';
+        } else if (state.percent >= 80 && state.allowed_domains && state.allowed_domains.includes('youtube.com')) {
+            focusRuleText.innerText = `Blocked: ${(state.blocked_domains || []).join(', ')} | Unlocked: YouTube`;
+        }
+        else {
+            focusRuleText.innerText = `Blocked: ${(state.blocked_domains || []).join(', ')}`;
+        }
+    }
+
+    if (focusHintText) {
+        if (!state.has_schedule) {
+            focusHintText.innerText = 'Create a study plan to activate Focus Mode.';
+        } else if (state.active_subject) {
+            focusHintText.innerText = `Adaptive mode tuned for: ${state.active_subject}`;
+        } else {
+            focusHintText.innerText = 'Adaptive mode applies based on your next study block.';
+        }
+    }
+
+    if (startButton) {
+        startButton.disabled = state.focus_mode || !state.has_schedule;
+    }
+
+    if (endButton) {
+        endButton.disabled = !state.session_active;
+    }
+
+    setPlannerLocalState(state);
+}
+
+function updateFocusFromServer() {
+    return fetch('/focus-state')
+        .then(response => response.json())
+        .then(data => {
+            renderFocusState(data);
+            return data;
+        });
+}
+
+function startStudySession() {
+    return fetch('/focus-mode/start', { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            renderFocusState(data);
+            updateTimerStatus('Study session active. Focus mode enabled.');
+        });
+}
+
+function endStudySession() {
+    const reflection = window.prompt('Before ending focus mode, what did you complete?');
+    if (!reflection || !reflection.trim()) {
+        updateTimerStatus('Focus lock active. Add a completion note to end session.');
+        return Promise.resolve();
+    }
+
+    return fetch('/focus-mode/stop', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ reflection: reflection.trim() })
+    })
+        .then(async (response) => {
+            const data = await response.json();
+            if (!response.ok) {
+                throw new Error(data.error || 'Unable to stop session');
+            }
+            return data;
+        })
+        .then(data => {
+            renderFocusState(data);
+            updateTimerStatus('Study session ended. Focus mode disabled.');
+        })
+        .catch(error => {
+            updateTimerStatus(error.message || 'Unable to stop session.');
+        });
+}
+
+function removeChecklistRow(data) {
+    const rows = document.querySelectorAll('#remainingSessions .check-item');
+    rows.forEach(row => {
+        if (
+            row.dataset.subject === data.subject &&
+            row.dataset.start === data.start &&
+            row.dataset.end === data.end
+        ) {
+            row.remove();
+        }
+    });
+}
+
+function completeSession(row) {
+    if (!row) {
+        return Promise.resolve(null);
+    }
+
+    const payload = getRowData(row);
+
+    return fetch('/complete-session', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .then(data => {
+        removeChecklistRow(payload);
+        updateChecklistProgress(data);
+        return data;
+    });
+}
+
+function undoLastSession() {
+    return fetch('/undo-session', {
+        method: 'POST'
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.restored_item) {
+            const remainingContainer = document.getElementById('remainingSessions');
+            if (remainingContainer) {
+                remainingContainer.prepend(buildChecklistRow(data.restored_item));
+            }
+        }
+
+        updateChecklistProgress(data);
+
+        if (data.current_study_minutes) {
+            studyMinutes = Number(data.current_study_minutes);
+            remainingSeconds = studyMinutes * 60;
+            setMode('study');
+            updateTimerMeta();
+            renderTimer();
+        }
+    });
+}
+
+function markSessionComplete(checkbox) {
+    const row = checkbox.closest('.check-item');
+    if (!row) {
+        return;
+    }
+
+    checkbox.disabled = true;
+    completeSession(row);
+}
+
+function updateTimerMeta() {
+    const timerMeta = document.getElementById('timerMeta');
+    if (timerMeta) {
+        timerMeta.innerText = `Study: ${studyMinutes} min | Break: ${breakMinutes} min`;
+    }
+}
+
+function playAlert() {
+    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+
+    if (!AudioContextClass) {
+        return;
+    }
+
+    const audioContext = new AudioContextClass();
+    const oscillator = audioContext.createOscillator();
+    const gainNode = audioContext.createGain();
+
+    oscillator.type = 'sine';
+    oscillator.frequency.setValueAtTime(880, audioContext.currentTime);
+    gainNode.gain.setValueAtTime(0.0001, audioContext.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.2, audioContext.currentTime + 0.02);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, audioContext.currentTime + 0.6);
+
+    oscillator.connect(gainNode);
+    gainNode.connect(audioContext.destination);
+
+    oscillator.start();
+    oscillator.stop(audioContext.currentTime + 0.65);
+    oscillator.onended = () => audioContext.close();
+}
+
+function syncBreakMode(mode) {
+    const route = mode === 'break' ? '/focus-mode/break-start' : '/focus-mode/break-end';
+    return fetch(route, { method: 'POST' })
+        .then(response => response.json())
+        .then(data => {
+            renderFocusState(data);
+            return data;
+        })
+        .catch(() => null);
+}
+
+function setMode(mode) {
+    activeMode = mode;
+    remainingSeconds = (mode === 'break' ? breakMinutes : studyMinutes) * 60;
+    renderTimer();
+    updateTimerStatus(mode === 'break' ? 'Break session ready' : 'Study session ready');
+    syncBreakMode(mode);
+}
+
+function startTimer(mode) {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+    }
+
+    if (autoAdvanceTimeout) {
+        clearTimeout(autoAdvanceTimeout);
+        autoAdvanceTimeout = null;
+    }
+
+    if (activeMode !== mode || remainingSeconds <= 0) {
+        setMode(mode);
+    }
+
+    updateTimerStatus(mode === 'break' ? 'Break in progress' : 'Study in progress');
+
+    timerInterval = setInterval(() => {
+        if (remainingSeconds <= 0) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            playAlert();
+
+            if (activeMode === 'study') {
+                const nextMode = 'break';
+                updateTimerStatus('Study finished. Starting break session.');
+                const firstRow = document.querySelector('#remainingSessions .check-item');
+                if (firstRow) {
+                    completeSession(firstRow).then(() => {
+                        autoAdvanceTimeout = setTimeout(() => {
+                            setMode(nextMode);
+                            startTimer(nextMode);
+                        }, 1200);
+                    });
+                }
+            } else {
+                updateTimerStatus('Break finished. Cycle complete. Start study to begin again.');
+                setMode('study');
+            }
+            return;
+        }
+
+        remainingSeconds -= 1;
+        renderTimer();
+    }, 1000);
+}
+
+function pauseTimer() {
+    if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+    }
+
+    if (autoAdvanceTimeout) {
+        clearTimeout(autoAdvanceTimeout);
+        autoAdvanceTimeout = null;
+    }
+
+    updateTimerStatus('Timer paused');
+}
+
+function resetTimer() {
+    pauseTimer();
+    setMode(activeMode);
+    updateTimerStatus('Timer reset');
+}
+
+function updateProgress() {
+    const percent = {{ percent }};
+    document.getElementById('progressFill').style.width = percent + '%';
+    document.getElementById('progressText').innerText = percent + '%';
+}
+
+updateProgress();
+updateTimerMeta();
+renderTimer();
+renderFocusState(focusState);
+updateFocusFromServer();
+</script>
+
+{% endblock %}

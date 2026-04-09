@@ -1,0 +1,227 @@
+[
+    {
+        "user": "rachel.brathab@gmail.com",
+        "date": "2026-04-08 21:53:48.429645",
+        "pomodoro": {
+            "tier": "standard",
+            "study_minutes": 50,
+            "break_minutes": 10
+        },
+        "schedule": [
+            {
+                "type": "study",
+                "subject": "Math",
+                "start": "9:00 PM",
+                "end": "9:50 PM",
+                "duration_minutes": 50
+            },
+            {
+                "type": "break",
+                "subject": "Break",
+                "start": "9:50 PM",
+                "end": "10:00 PM",
+                "duration_minutes": 10
+            },
+            {
+                "type": "study",
+                "subject": "Math",
+                "start": "10:00 PM",
+                "end": "10:50 PM",
+                "duration_minutes": 50
+            },
+            {
+                "type": "break",
+                "subject": "Break",
+                "start": "10:50 PM",
+                "end": "11:00 PM",
+                "duration_minutes": 10
+            },
+            {
+                "type": "study",
+                "subject": "Math",
+                "start": "11:00 PM",
+                "end": "11:50 PM",
+                "duration_minutes": 50
+            },
+            {
+                "type": "break",
+                "subject": "Break",
+                "start": "11:50 PM",
+                "end": "12:00 AM",
+                "duration_minutes": 10
+            },
+            {
+                "type": "study",
+                "subject": "Math",
+                "start": "12:00 AM",
+                "end": "12:50 AM",
+                "duration_minutes": 50
+            },
+            {
+                "type": "break",
+                "subject": "Break",
+                "start": "12:50 AM",
+                "end": "1:00 AM",
+                "duration_minutes": 10
+            },
+            {
+                "type": "study",
+                "subject": "Math",
+                "start": "1:00 AM",
+                "end": "1:50 AM",
+                "duration_minutes": 50
+            },
+            {
+                "type": "break",
+                "subject": "Break",
+                "start": "1:50 AM",
+                "end": "2:00 AM",
+                "duration_minutes": 10
+            },
+            {
+                "type": "study",
+                "subject": "Math",
+                "start": "2:00 AM",
+                "end": "2:50 AM",
+                "duration_minutes": 50
+            },
+            {
+                "type": "break",
+                "subject": "Break",
+                "start": "2:50 AM",
+                "end": "3:00 AM",
+                "duration_minutes": 10
+            },
+            {
+                "type": "study",
+                "subject": "Math",
+                "start": "3:00 AM",
+                "end": "3:50 AM",
+                "duration_minutes": 50
+            },
+            {
+                "type": "break",
+                "subject": "Break",
+                "start": "3:50 AM",
+                "end": "4:00 AM",
+                "duration_minutes": 10
+            },
+            {
+                "type": "study",
+                "subject": "Math",
+                "start": "4:00 AM",
+                "end": "4:50 AM",
+                "duration_minutes": 50
+            },
+            {
+                "type": "break",
+                "subject": "Break",
+                "start": "4:50 AM",
+                "end": "5:00 AM",
+                "duration_minutes": 10
+            },
+            {
+                "type": "study",
+                "subject": "Math",
+                "start": "5:00 AM",
+                "end": "5:50 AM",
+                "duration_minutes": 50
+            },
+            {
+                "type": "break",
+                "subject": "Break",
+                "start": "5:50 AM",
+                "end": "6:00 AM",
+                "duration_minutes": 10
+            },
+            {
+                "type": "study",
+                "subject": "Math",
+                "start": "6:00 AM",
+                "end": "6:50 AM",
+                "duration_minutes": 50
+            },
+            {
+                "type": "break",
+                "subject": "Break",
+                "start": "6:50 AM",
+                "end": "7:00 AM",
+                "duration_minutes": 10
+            },
+            {
+                "type": "study",
+                "subject": "Math",
+                "start": "7:00 AM",
+                "end": "7:50 AM",
+                "duration_minutes": 50
+            },
+            {
+                "type": "break",
+                "subject": "Break",
+                "start": "7:50 AM",
+                "end": "8:00 AM",
+                "duration_minutes": 10
+            },
+            {
+                "type": "study",
+                "subject": "Math",
+                "start": "8:00 AM",
+                "end": "8:50 AM",
+                "duration_minutes": 50
+            },
+            {
+                "type": "break",
+                "subject": "Break",
+                "start": "8:50 AM",
+                "end": "9:00 AM",
+                "duration_minutes": 10
+            },
+            {
+                "type": "study",
+                "subject": "Math",
+                "start": "9:00 AM",
+                "end": "9:50 AM",
+                "duration_minutes": 50
+            },
+            {
+                "type": "break",
+                "subject": "Break",
+                "start": "9:50 AM",
+                "end": "10:00 AM",
+                "duration_minutes": 10
+            },
+            {
+                "type": "study",
+                "subject": "Math",
+                "start": "10:00 AM",
+                "end": "10:50 AM",
+                "duration_minutes": 50
+            },
+            {
+                "type": "break",
+                "subject": "Break",
+                "start": "10:50 AM",
+                "end": "11:00 AM",
+                "duration_minutes": 10
+            },
+            {
+                "type": "study",
+                "subject": "Math",
+                "start": "11:00 AM",
+                "end": "11:50 AM",
+                "duration_minutes": 50
+            }
+        ],
+        "completed_study_sessions": 15,
+        "total_study_sessions": 15,
+        "progress_percent": 100,
+        "focus_stop_count": 1,
+        "distraction_attempts": 1,
+        "goal_confirmations": [
+            {
+                "time": "2026-04-09T01:19:29.094945",
+                "reflection": "2"
+            }
+        ]
+    }
+]

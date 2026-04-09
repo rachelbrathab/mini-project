@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Focus Mode</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main class="popup">
+    <h1 class="popup-title">Focus Mode</h1>
+    <p class="build-label">LOCAL BUILD 1.0.1</p>
+    <p class="mantra" id="mantraText">Your goals are waiting. Start one focused session now.</p>
+    <p class="status-text"><span class="status-label">Status:</span> <span id="modeStatus" class="badge">OFF</span></p>
+    <p class="status-text"><span class="status-label">Rule:</span> <span id="ruleStatus">Blocking all listed sites</span></p>
+    <p class="emergency-timer" id="emergencyTimer" hidden></p>
+    <p class="hint-text" id="hintText"></p>
+
+    <div class="actions">
+      <button id="startBtn">Start Focus Mode</button>
+      <button id="stopBtn">Stop Focus Mode</button>
+      <button id="emergencyBtn">Emergency 5-Min Break</button>
+    </div>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>

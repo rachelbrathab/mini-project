@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card">
+    <h2>Focus Analytics Dashboard</h2>
+    <p class="timer-meta">Track your consistency, productive time, and distraction pressure across recent plans.</p>
+
+    <div class="streak-grid">
+        <div class="streak-card">
+            <div class="streak-value">{{ analytics.total_productive_minutes }}</div>
+            <div class="streak-label">Total productive minutes</div>
+        </div>
+        <div class="streak-card">
+            <div class="streak-value">{{ analytics.total_focus_starts }}</div>
+            <div class="streak-label">Focus starts</div>
+        </div>
+        <div class="streak-card">
+            <div class="streak-value">{{ analytics.total_distractions }}</div>
+            <div class="streak-label">Distraction attempts</div>
+        </div>
+        <div class="streak-card">
+            <div class="streak-value">{{ analytics.completion_rate }}%</div>
+            <div class="streak-label">Completion rate</div>
+        </div>
+        <div class="streak-card">
+            <div class="streak-value">{{ analytics.focus_efficiency }}%</div>
+            <div class="streak-label">Focus efficiency</div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h3>Daily Trend</h3>
+    {% if analytics.daily_labels %}
+    <canvas id="analyticsChart"></canvas>
+    {% else %}
+    <p>No analytics data yet.</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h3>Most Blocked Domains</h3>
+    {% if analytics.top_domains %}
+    <ul>
+        {% for item in analytics.top_domains %}
+        <li><strong>{{ item.domain }}</strong> - {{ item.count }} blocks</li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>No blocked domain events logged yet.</p>
+    {% endif %}
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const labels = {{ analytics.daily_labels | tojson }};
+const productive = {{ analytics.daily_productive | tojson }};
+const completion = {{ analytics.daily_completion | tojson }};
+
+if (labels.length > 0) {
+    new Chart(document.getElementById('analyticsChart'), {
+        type: 'line',
+        data: {
+            labels,
+            datasets: [
+                {
+                    label: 'Productive minutes',
+                    data: productive,
+                    borderColor: 'rgba(33, 53, 55, 0.9)',
+                    backgroundColor: 'rgba(33, 53, 55, 0.12)',
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'Completion %',
+                    data: completion,
+                    borderColor: 'rgba(21, 117, 83, 0.9)',
+                    backgroundColor: 'rgba(21, 117, 83, 0.1)',
+                    yAxisID: 'y1'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    position: 'left'
+                },
+                y1: {
+                    beginAtZero: true,
+                    position: 'right',
+                    max: 100,
+                    grid: {
+                        drawOnChartArea: false
+                    }
+                }
+            }
+        }
+    });
+}
+</script>
+
+{% endblock %}

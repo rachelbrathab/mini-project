@@ -1,0 +1,147 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background: #edf3f4;
+  color: #263d41;
+}
+
+.popup {
+  width: 292px;
+  padding: 14px;
+  background: #ffffff;
+  border: 1px solid #b8c1c3;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14);
+}
+
+.popup-title {
+  margin: 0 0 2px;
+  font-size: 20px;
+  line-height: 1.05;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: #2e4b50;
+}
+
+.build-label {
+  margin: 0 0 8px;
+  font-size: 11px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #607f83;
+  font-weight: 700;
+}
+
+.mantra {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #4b5f63;
+  line-height: 1.35;
+}
+
+.mantra.is-active {
+  color: #2a7e57;
+}
+
+.status-text {
+  margin: 7px 0;
+  font-size: 13px;
+  line-height: 1.35;
+  letter-spacing: 0;
+  font-weight: 600;
+  color: #3b5459;
+}
+
+.status-label {
+  font-weight: 700;
+  color: #3f5960;
+}
+
+.hint-text {
+  margin: 8px 0 0;
+  font-size: 12px;
+  line-height: 1.35;
+  color: #5a7478;
+  min-height: 16px;
+}
+
+.emergency-timer {
+  margin: 7px 0 0;
+  padding: 6px 8px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #7a460b;
+  background: #f8ead9;
+  border: 1px solid #e3c9a8;
+}
+
+.badge {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: rgba(83, 109, 113, 0.2);
+  color: #526a6f;
+  font-weight: 700;
+  font-size: 13px;
+  vertical-align: middle;
+}
+
+.badge.is-on {
+  background: rgba(44, 135, 83, 0.23);
+  color: #256f4a;
+}
+
+.actions {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+button {
+  width: 100%;
+  border: none;
+  border-radius: 8px;
+  padding: 10px;
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+#startBtn {
+  background: #758386;
+}
+
+#stopBtn {
+  background: #1f4348;
+}
+
+#emergencyBtn {
+  background: #915a1d;
+}
+
+#emergencyBtn:disabled {
+  background: #9c8f81;
+}
+
+button:hover:not(:disabled) {
+  filter: brightness(0.96);
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 340px) {
+  .popup {
+    width: 100%;
+  }
+}

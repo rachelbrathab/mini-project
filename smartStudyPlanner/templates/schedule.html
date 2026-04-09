@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card">
+
+<h2>📅 Schedule</h2>
+<p class="timer-meta">Applied Timer: {{ pomodoro.study_minutes|default(50) }} min study / {{ pomodoro.break_minutes|default(10) }} min break</p>
+
+<ul>
+{% for s in schedule %}
+<li class="{% if s.type == 'break' %}schedule-break{% endif %}">
+	{{ s.subject }} → {{ s.start }} - {{ s.end }}
+	<span class="check-item-pill">{% if s.type == 'break' %}Break{% else %}Study{% endif %}</span>
+</li>
+{% endfor %}
+</ul>
+
+<a class="button-link" href="/progress">Go to Progress</a>
+
+</div>
+
+{% endblock %}

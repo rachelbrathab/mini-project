@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card">
+
+<h1>📚 Smart Study Planner</h1>
+
+<form method="post">
+
+<label>Number of Subjects:</label>
+<input type="number" name="numSubjects" id="numSubjects" min="1" value="2" onchange="generateFields()">
+
+<label>Pomodoro Tier:</label>
+<select name="pomodoroTier" id="pomodoroTier">
+    <option value="light">Light Focus (25 min study / 5 min break)</option>
+    <option value="standard" selected>Standard Focus (50 min study / 10 min break)</option>
+    <option value="deep">Deep Focus (90 min study / 15 min break)</option>
+</select>
+
+<div id="subjectsContainer"></div>
+
+<h3>Select Your Free Time</h3>
+
+<div id="timeContainer"></div>
+
+<button type="button" onclick="addTimeSlot()">+ Add Time Slot</button>
+
+<br><br>
+
+<h3>Focus Controls</h3>
+<div class="subject-box">
+    <label class="inline-check">
+        <input type="checkbox" name="accountabilityEnabled" id="accountabilityEnabled">
+        Enable accountability mode
+    </label>
+
+    <label>Buddy Email (from your login)</label>
+    <input type="email" name="buddyEmail" id="buddyEmail" value="{{ login_email }}" readonly>
+
+    <label class="inline-check" style="margin-top:10px;">
+        <input type="checkbox" name="hardMode" id="hardMode">
+        Exam hard mode (limits emergency breaks)
+    </label>
+</div>
+
+<button type="submit">Generate Plan</button>
+
+</form>
+
+</div>
+
+<script>
+let timeSlotCount = 0;
+
+function generateFields() {
+    const subjectCount = Math.max(1, parseInt(document.getElementById("numSubjects").value || "1", 10));
+    const container = document.getElementById("subjectsContainer");
+
+    container.innerHTML = "";
+
+    for (let i = 1; i <= subjectCount; i++) {
+        const fieldset = document.createElement("div");
+        fieldset.className = "subject-box";
+
+        fieldset.innerHTML = `
+            <label>Subject ${i}</label>
+            <input name="sub${i}" placeholder="Subject name" required>
+
+            <label>Difficulty</label>
+            <select name="diff${i}">
+                <option value="easy">Easy</option>
+                <option value="medium">Medium</option>
+                <option value="hard">Hard</option>
+            </select>
+
+            <label>Topics</label>
+            <input type="number" name="topics${i}" min="1" value="1" required>
+        `;
+
+        container.appendChild(fieldset);
+    }
+}
+
+function addTimeSlot() {
+    timeSlotCount += 1;
+    const container = document.getElementById("timeContainer");
+    const slot = document.createElement("div");
+    slot.className = "time-box";
+
+    slot.innerHTML = `
+        <label>Start Time</label>
+        <input type="time" name="start${timeSlotCount}" required>
+
+        <label>End Time</label>
+        <input type="time" name="end${timeSlotCount}" required>
+    `;
+
+    container.appendChild(slot);
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+    generateFields();
+    addTimeSlot();
+});
+</script>
+
+{% endblock %}
