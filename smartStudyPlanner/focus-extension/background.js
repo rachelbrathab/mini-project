@@ -40,7 +40,16 @@ function isPlannerUrl(url) {
     return false;
   }
 
-  return url.startsWith("http://127.0.0.1:") || url.startsWith("http://localhost:");
+  if (url.startsWith("http://127.0.0.1:") || url.startsWith("http://localhost:")) {
+    return true;
+  }
+
+  try {
+    const parsed = new URL(url);
+    return parsed.hostname.endsWith(".onrender.com");
+  } catch (_err) {
+    return false;
+  }
 }
 
 function parseJsonArray(value) {
@@ -385,6 +394,23 @@ function shouldBlockHost(hostname, state) {
   return false;
 }
 
+function shouldEnforceYoutubeStudyOnly(state) {
+  if (!state.focusMode || isEmergencyUnlockActive(state)) {
+    return false;
+  }
+
+  if (state.plannerRewardActive) {
+    return false;
+  }
+
+  const allowed = Array.isArray(state.plannerAllowedDomains) ? state.plannerAllowedDomains : [];
+  if (allowed.includes("pomodoro-break-window") || allowed.includes("reward-window")) {
+    return false;
+  }
+
+  return true;
+}
+
 async function enforceTabIfNeeded(tabId, url) {
   if (typeof tabId !== "number" || !url) {
     return;
@@ -398,9 +424,7 @@ async function enforceTabIfNeeded(tabId, url) {
   const host = getHostname(url);
   const isYoutubeHost = isYoutubeDomain(host);
 
-  const youtubeExplicitlyAllowed = state.plannerAllowedDomains.includes("youtube.com");
-
-  if (isYoutubeHost && shouldBlockHost("youtube.com", state) && !youtubeExplicitlyAllowed) {
+  if (isYoutubeHost && shouldEnforceYoutubeStudyOnly(state)) {
     if (isYoutubeDiscoveryPage(url)) {
       return;
     }

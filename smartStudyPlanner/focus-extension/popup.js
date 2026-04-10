@@ -189,7 +189,7 @@ function getRuleText(state) {
   }
 
   if (state.plannerAllowedDomains.includes("youtube.com")) {
-    return "YouTube unlocked, other listed sites blocked";
+    return "YouTube study-only mode on; non-study videos blocked";
   }
 
   const hasYoutubeRule = state.plannerBlockedDomains.includes("youtube.com");

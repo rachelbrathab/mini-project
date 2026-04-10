@@ -289,7 +289,7 @@ function renderFocusState(state) {
         } else if (!state.focus_mode) {
             focusRuleText.innerText = 'Blocked: None';
         } else if (state.percent >= 80 && state.allowed_domains && state.allowed_domains.includes('youtube.com')) {
-            focusRuleText.innerText = `Blocked: ${(state.blocked_domains || []).join(', ')} | Unlocked: YouTube`;
+            focusRuleText.innerText = `Blocked: ${(state.blocked_domains || []).join(', ')} | YouTube: study-only`;
         }
         else {
             focusRuleText.innerText = `Blocked: ${(state.blocked_domains || []).join(', ')}`;
