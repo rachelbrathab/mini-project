@@ -1,9 +1,11 @@
-from flask import Flask, request, render_template, redirect, url_for, session
+from flask import Flask, request, render_template, redirect, url_for, session, send_file
 from flask import jsonify
 from src.planner import generate_schedule, format_time
 import json
 import copy
 import os
+import io
+import zipfile
 from datetime import datetime, timedelta, date
 from collections import Counter
 
@@ -1041,6 +1043,32 @@ def accountability():
     stats = get_user_stats(session.get("user"))
     summary = build_accountability_summary(session.get("user"))
     return render_template("accountability.html", stats=stats, summary=summary)
+
+
+@app.route("/download-extension")
+def download_extension():
+    if "user" not in session:
+        return redirect("/login")
+
+    extension_dir = os.path.join(app.root_path, "focus-extension")
+    if not os.path.isdir(extension_dir):
+        return jsonify({"error": "Extension package not found"}), 404
+
+    buffer = io.BytesIO()
+    with zipfile.ZipFile(buffer, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        for root, _dirs, files in os.walk(extension_dir):
+            for filename in files:
+                file_path = os.path.join(root, filename)
+                relative_path = os.path.relpath(file_path, extension_dir)
+                archive.write(file_path, arcname=os.path.join("focus-extension", relative_path))
+
+    buffer.seek(0)
+    return send_file(
+        buffer,
+        mimetype="application/zip",
+        as_attachment=True,
+        download_name="smart-study-focus-extension.zip",
+    )
 
 
 @app.route("/analytics/domain-hit", methods=["POST"])
