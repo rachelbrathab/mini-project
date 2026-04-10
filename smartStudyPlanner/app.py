@@ -1045,6 +1045,14 @@ def accountability():
     return render_template("accountability.html", stats=stats, summary=summary)
 
 
+@app.route("/extension-setup")
+def extension_setup():
+    if "user" not in session:
+        return redirect("/login")
+
+    return render_template("extension_setup.html")
+
+
 @app.route("/download-extension")
 def download_extension():
     if "user" not in session:

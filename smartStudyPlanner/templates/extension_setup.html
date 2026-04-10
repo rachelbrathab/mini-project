@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="card">
+    <h2>Chrome Extension Setup</h2>
+    <p class="timer-meta">Install the Smart Study Focus extension from your downloaded ZIP file.</p>
+
+    <ol>
+        <li>Click <strong>Download Extension</strong> in the sidebar to download <strong>smart-study-focus-extension.zip</strong>.</li>
+        <li>Extract the ZIP file on your computer.</li>
+        <li>Open Chrome and go to <strong>chrome://extensions</strong>.</li>
+        <li>Turn on <strong>Developer mode</strong> (top-right corner).</li>
+        <li>Click <strong>Load unpacked</strong>.</li>
+        <li>Select the extracted <strong>focus-extension</strong> folder.</li>
+        <li>Pin the extension and keep your planner open while studying.</li>
+    </ol>
+
+    <div class="focus-panel">
+        <h3>Troubleshooting</h3>
+        <p><strong>Extension not updating?</strong> Click <em>Reload</em> on the extension card in chrome://extensions.</p>
+        <p><strong>Focus rules not syncing?</strong> Keep the planner tab open and refresh your Progress page.</p>
+        <p><strong>Download failed?</strong> Log in again and retry from the sidebar download link.</p>
+    </div>
+
+    <p>
+        <a class="button-link" href="/download-extension">Download Latest Extension ZIP</a>
+    </p>
+</div>
+
+{% endblock %}
