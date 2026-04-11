@@ -4,6 +4,7 @@ const OFFLINE_URLS = [
   "/login",
   "/signup",
   "/static/style.css",
+  "/static/pwa-icon.svg",
   "/pwa-icon.png",
   "/manifest.webmanifest"
 ];

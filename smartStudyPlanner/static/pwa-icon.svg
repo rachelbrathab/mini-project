@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="Smart Study Planner icon">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#163233" />
+      <stop offset="100%" stop-color="#2f6f67" />
+    </linearGradient>
+    <linearGradient id="badge" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#f6f3b4" />
+      <stop offset="100%" stop-color="#ffd166" />
+    </linearGradient>
+  </defs>
+
+  <rect x="24" y="24" width="464" height="464" rx="110" fill="url(#bg)" />
+
+  <path d="M150 150h212c13 0 24 11 24 24v166c0 13-11 24-24 24H150c-13 0-24-11-24-24V174c0-13 11-24 24-24z" fill="#ffffff" opacity="0.94"/>
+
+  <path d="M256 150v214" stroke="#dce5e5" stroke-width="8"/>
+  <path d="M176 202h56M176 244h56M176 286h56M176 328h56" stroke="#7aa2a2" stroke-width="10" stroke-linecap="round"/>
+  <path d="M280 202h56M280 244h56M280 286h56M280 328h56" stroke="#7aa2a2" stroke-width="10" stroke-linecap="round"/>
+
+  <circle cx="378" cy="390" r="64" fill="url(#badge)" />
+  <path d="M352 392l18 18 34-36" fill="none" stroke="#1f423f" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
