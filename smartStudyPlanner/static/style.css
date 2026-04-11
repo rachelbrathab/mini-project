@@ -70,6 +70,20 @@ body {
     gap: 24px;
 }
 
+.brand-logo-wrap {
+    width: min(100%, 720px);
+    display: flex;
+    justify-content: center;
+    margin-bottom: 2px;
+}
+
+.brand-logo {
+    width: min(100%, 520px);
+    height: auto;
+    border-radius: 14px;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
 /* CARD */
 .card,
 .container {

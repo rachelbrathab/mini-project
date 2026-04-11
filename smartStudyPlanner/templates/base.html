@@ -3,20 +3,20 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Smart Planner</title>
+    <title>Serenra</title>
     <meta name="theme-color" content="#213537">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <link rel="manifest" href="/manifest.webmanifest">
-    <link rel="icon" href="/static/pwa-icon.svg">
-    <link rel="apple-touch-icon" href="/pwa-icon.png">
+    <link rel="icon" href="/static/serenra-icon.png">
+    <link rel="apple-touch-icon" href="/static/serenra-icon.png">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
 </head>
 <body>
 
 <div class="sidebar">
-    <h2>📚 Planner</h2>
+    <h2>SERENRA</h2>
 
     <a href="/">🏠 Input</a>
     <a href="/schedule">📅 Schedule</a>
@@ -34,6 +34,9 @@
 </div>
 
 <div class="main">
+    <div class="brand-logo-wrap">
+        <img src="/static/serenra-logo.png" alt="Serenra logo" class="brand-logo" onerror="this.style.display='none'">
+    </div>
     {% block content %}{% endblock %}
 </div>
 

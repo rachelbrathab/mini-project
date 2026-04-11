@@ -4,8 +4,8 @@ const OFFLINE_URLS = [
   "/login",
   "/signup",
   "/static/style.css",
-  "/static/pwa-icon.svg",
-  "/pwa-icon.png",
+  "/static/serenra-icon.png",
+  "/static/serenra-logo.png",
   "/manifest.webmanifest"
 ];
 
