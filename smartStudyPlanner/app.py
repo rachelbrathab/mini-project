@@ -722,6 +722,14 @@ def is_valid_email(value):
 
 
 # ---------- AUTH ----------
+@app.route("/")
+def home():
+    if "user" in session:
+        return redirect("/input")
+
+    return render_template("home.html")
+
+
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
     if request.method == "POST":
@@ -753,7 +761,7 @@ def login():
                 session["user"] = u["username"]
                 # Keep buddy email synced to the identity used to log in.
                 update_user_stats(session["user"], {"buddy_email": session["user"]})
-                return redirect("/")
+                return redirect("/input")
         return render_template("login.html", error="Invalid username or password.")
     return render_template("login.html")
 
@@ -761,11 +769,11 @@ def login():
 @app.route("/logout")
 def logout():
     session.clear()
-    return redirect("/login")
+    return redirect("/")
 
 
 # ---------- INPUT ----------
-@app.route("/", methods=["GET", "POST"])
+@app.route("/input", methods=["GET", "POST"])
 def input_page():
     if "user" not in session:
         return redirect("/login")
@@ -904,6 +912,9 @@ def input_page():
 # ---------- PAGES ----------
 @app.route("/schedule")
 def schedule():
+    if "user" not in session:
+        return redirect("/login")
+
     pomodoro = session.get("pomodoro", {"tier": "standard", "study_minutes": 50, "break_minutes": 10})
     return render_template("schedule.html", schedule=session.get("raw_schedule", session.get("schedule", [])), pomodoro=pomodoro)
 
@@ -1053,6 +1064,9 @@ def focus_state():
 
 @app.route("/complete-session", methods=["POST"])
 def complete_session():
+    if "user" not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+
     current_schedule = session.get("schedule", [])
     payload = request.get_json(silent=True) or {}
     target_subject = payload.get("subject")
@@ -1166,6 +1180,9 @@ def complete_session():
 
 @app.route("/undo-session", methods=["POST"])
 def undo_session():
+    if "user" not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+
     current_schedule = session.get("schedule", [])
     completed_history = session.get("completed_history", [])
 

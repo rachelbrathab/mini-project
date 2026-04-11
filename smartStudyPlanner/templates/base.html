@@ -16,9 +16,12 @@
 <body>
 
 <div class="sidebar">
-    <h2>SERENRA</h2>
+    <a href="/input" class="brand-lockup" aria-label="Serenra home">
+        <img src="/static/serenra-logo.png" alt="Serenra logo" class="sidebar-logo" onerror="this.style.display='none'">
+        <span>SERENRA</span>
+    </a>
 
-    <a href="/">🏠 Input</a>
+    <a href="/input">🏠 Input</a>
     <a href="/schedule">📅 Schedule</a>
     <a href="/progress">📊 Progress</a>
     <a href="/history">📁 History</a>
@@ -34,9 +37,6 @@
 </div>
 
 <div class="main">
-    <div class="brand-logo-wrap">
-        <img src="/static/serenra-logo.png" alt="Serenra logo" class="brand-logo" onerror="this.style.display='none'">
-    </div>
     {% block content %}{% endblock %}
 </div>
 
