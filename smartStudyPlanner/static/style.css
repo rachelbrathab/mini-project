@@ -29,7 +29,7 @@ body {
 }
 
 .landing-logo {
-    width: clamp(180px, 26vw, 340px);
+    width: clamp(170px, 22vw, 300px);
     height: auto;
     filter: drop-shadow(0 8px 18px rgba(20, 33, 35, 0.2));
 }
@@ -67,15 +67,19 @@ body {
     margin: 18px auto 0;
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: 22px;
+    gap: 26px;
 }
 
 .landing-hero {
     background: rgba(255, 255, 255, 0.86);
     border: 1px solid rgba(33, 53, 55, 0.12);
     border-radius: 24px;
-    padding: clamp(24px, 4vw, 44px);
+    padding: clamp(24px, 4vw, 40px);
     box-shadow: 0 18px 34px rgba(25, 43, 45, 0.16);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     text-align: center;
     animation: fadeRise 0.55s ease;
 }
@@ -83,27 +87,42 @@ body {
 .landing-hero-logo-wrap {
     display: flex;
     justify-content: center;
-    margin-bottom: 10px;
+    margin-bottom: 14px;
+}
+
+.landing-copy {
+    width: min(100%, 760px);
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
 }
 
 .landing-app-name {
-    margin: 0;
+    margin: 0 0 8px;
     font-size: clamp(2rem, 4.4vw, 3.1rem);
-    line-height: 1.1;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
     color: #1a2f31;
 }
 
 .landing-tagline {
-    margin: 12px auto 8px;
-    font-size: clamp(1rem, 2vw, 1.2rem);
+    margin: 0 auto 12px;
+    font-size: clamp(1.02rem, 1.9vw, 1.28rem);
+    line-height: 1.35;
     color: #2e4d50;
-    font-weight: 500;
+    font-weight: 600;
 }
 
 .landing-description {
     margin: 0 auto;
+    font-size: clamp(1rem, 1.6vw, 1.08rem);
+    line-height: 1.55;
     color: #2f4f52;
-    max-width: 64ch;
+    max-width: 50ch;
+    text-align: center;
 }
 
 .landing-hero h1 {
@@ -151,8 +170,27 @@ body {
 
 .landing-features {
     display: grid;
+    align-items: stretch;
     grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 14px;
+}
+
+.landing-features-header {
+    grid-column: 1 / -1;
+    text-align: center;
+    margin-bottom: 2px;
+}
+
+.landing-features-header h2 {
+    margin: 0 0 6px;
+    font-size: clamp(1.35rem, 2.8vw, 1.8rem);
+    color: #183235;
+}
+
+.landing-features-header p {
+    margin: 0;
+    color: #3f5f62;
+    font-weight: 500;
 }
 
 .feature-card {
@@ -162,16 +200,21 @@ body {
     padding: 18px;
     box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
     animation: fadeRise 0.55s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
 }
 
 .feature-card h2 {
-    margin: 0 0 6px;
+    margin: 0;
     font-size: 1.06rem;
+    line-height: 1.28;
 }
 
 .feature-card p {
     margin: 0;
     color: #466568;
+    line-height: 1.5;
 }
 
 .feature-icon {
@@ -185,7 +228,7 @@ body {
     font-weight: 700;
     letter-spacing: 0.04em;
     color: #163033;
-    margin-bottom: 10px;
+    margin-bottom: 8px;
     background: linear-gradient(150deg, rgba(171, 208, 192, 0.9), rgba(131, 175, 161, 0.9));
     border: 1px solid rgba(33, 53, 55, 0.1);
 }
@@ -571,11 +614,32 @@ li {
     .landing-features {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
+
+    .landing-copy {
+        width: min(100%, 680px);
+    }
 }
 
 @media (max-width: 760px) {
     .landing-page {
         padding: 16px;
+    }
+
+    .landing-hero {
+        border-radius: 20px;
+        padding: 22px 18px 24px;
+    }
+
+    .landing-copy {
+        width: min(100%, 560px);
+    }
+
+    .landing-app-name {
+        font-size: clamp(1.8rem, 9vw, 2.5rem);
+    }
+
+    .landing-description {
+        max-width: 36ch;
     }
 
     .landing-header {

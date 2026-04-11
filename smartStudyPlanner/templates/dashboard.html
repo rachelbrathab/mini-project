@@ -27,15 +27,12 @@
 </main>
 
 <script>
-// Sync browser auth state after successful server-side login.
+// Dashboard is server-protected; sync browser auth state for frontend checks.
+localStorage.setItem('isAuthenticated', 'true');
+
 const params = new URLSearchParams(window.location.search);
 if (params.get('auth') === '1') {
-    localStorage.setItem('isAuthenticated', 'true');
     window.history.replaceState({}, document.title, '/dashboard');
-}
-
-if (localStorage.getItem('isAuthenticated') !== 'true') {
-    window.location.href = '/login';
 }
 
 document.getElementById('logoutBtn').addEventListener('click', () => {

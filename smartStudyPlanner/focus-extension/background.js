@@ -312,6 +312,14 @@ function getHostname(url) {
   }
 }
 
+function isLocalDevHost(hostname) {
+  if (!hostname) {
+    return false;
+  }
+
+  return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "::1";
+}
+
 function isYoutubeDomain(hostname) {
   if (!hostname) {
     return false;
@@ -383,6 +391,11 @@ function shouldBlockHost(hostname, state) {
     return false;
   }
 
+  // Never block local development hosts.
+  if (isLocalDevHost(hostname)) {
+    return false;
+  }
+
   const domains = getEffectiveBlockedDomains(state);
   for (const domain of domains) {
     const isDomainMatch = hostname === domain || hostname.endsWith(`.${domain}`);
@@ -422,6 +435,11 @@ async function enforceTabIfNeeded(tabId, url) {
 
   const state = await getRuntimeState();
   const host = getHostname(url);
+
+  if (isLocalDevHost(host)) {
+    return;
+  }
+
   const isYoutubeHost = isYoutubeDomain(host);
 
   if (isYoutubeHost && shouldEnforceYoutubeStudyOnly(state)) {
