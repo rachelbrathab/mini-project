@@ -1,4 +1,4 @@
-from flask import Flask, request, render_template, redirect, url_for, session, send_file
+from flask import Flask, request, render_template, redirect, url_for, session, send_file, send_from_directory
 from flask import jsonify
 from src.planner import generate_schedule, format_time
 import json
@@ -1389,6 +1389,23 @@ def download_extension():
         as_attachment=True,
         download_name="smart-study-focus-extension.zip",
     )
+
+
+@app.route("/manifest.webmanifest")
+def web_manifest():
+    return send_from_directory(os.path.join(app.root_path, "static"), "manifest.webmanifest", mimetype="application/manifest+json")
+
+
+@app.route("/service-worker.js")
+def service_worker():
+    response = send_from_directory(os.path.join(app.root_path, "static"), "service-worker.js", mimetype="application/javascript")
+    response.headers["Cache-Control"] = "no-cache"
+    return response
+
+
+@app.route("/pwa-icon.png")
+def pwa_icon():
+    return send_from_directory(os.path.join(app.root_path, "focus-extension", "icons"), "icon.png", mimetype="image/png")
 
 
 @app.route("/analytics/domain-hit", methods=["POST"])

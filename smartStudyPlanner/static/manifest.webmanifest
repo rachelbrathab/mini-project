@@ -1,0 +1,22 @@
+{
+  "name": "Smart Study Planner",
+  "short_name": "StudyPlanner",
+  "description": "Build focused study schedules, track progress, and stay consistent.",
+  "start_url": "/login",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ABD0C0",
+  "theme_color": "#213537",
+  "icons": [
+    {
+      "src": "/pwa-icon.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/pwa-icon.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
