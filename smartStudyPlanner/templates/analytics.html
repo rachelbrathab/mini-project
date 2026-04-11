@@ -51,6 +51,31 @@
     {% endif %}
 </div>
 
+<div class="card">
+    <h3>Adaptive Revision Pressure</h3>
+    {% if analytics.weak_topics %}
+    <ul>
+        {% for item in analytics.weak_topics %}
+        <li><strong>{{ item.subject }}</strong> - flagged {{ item.count }} time(s)</li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>No weak-topic flags yet.</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h3>Focus Genome Snapshot</h3>
+    <p class="timer-meta">Top distraction day: {{ analytics.focus_genome.top_day }} | Top hour: {% if analytics.focus_genome.top_hour is not none %}{{ "%02d"|format(analytics.focus_genome.top_hour) }}:00{% else %}N/A{% endif %}</p>
+    {% if analytics.focus_genome.strategy_cards %}
+    <ul>
+        {% for card in analytics.focus_genome.strategy_cards %}
+        <li>{{ card }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 const labels = {{ analytics.daily_labels | tojson }};

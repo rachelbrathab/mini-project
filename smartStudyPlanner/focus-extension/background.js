@@ -2,7 +2,7 @@ const DEFAULT_BLOCKED_DOMAINS = [
   "netflix.com",
   "youtube.com",
   "instagram.com",
-  "primevideo.com"
+  "hotstar.com"
 ];
 
 const DNR_RULE_IDS = [1001, 1002, 1003, 1004];

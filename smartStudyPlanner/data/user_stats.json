@@ -1,0 +1,14 @@
+{
+    "rachel.brathab@gmail.com": {
+        "xp": 300,
+        "level": 3,
+        "buddy_email": "rachel.brathab@gmail.com",
+        "accountability_enabled": true,
+        "energy_map": {
+            "20": {
+                "sum": 21,
+                "count": 7
+            }
+        }
+    }
+}

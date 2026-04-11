@@ -4,6 +4,7 @@ from src.planner import generate_schedule, format_time
 import json
 import copy
 import os
+import re
 import io
 import zipfile
 from datetime import datetime, timedelta, date
@@ -11,6 +12,11 @@ from collections import Counter
 
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "secret123")
+
+DATA_DIR = os.path.join(app.root_path, "data")
+USERS_FILE = os.path.join(DATA_DIR, "users.json")
+PLANS_FILE = os.path.join(DATA_DIR, "plans.json")
+USER_STATS_FILE = os.path.join(DATA_DIR, "user_stats.json")
 
 POMODORO_TIERS = {
     "light": (25, 5),
@@ -22,13 +28,13 @@ DEFAULT_BLOCKED_DOMAINS = [
     "netflix.com",
     "youtube.com",
     "instagram.com",
-    "primevideo.com",
+    "hotstar.com",
 ]
 
 REWARD_UNLOCK_MINUTES = 5
 
 SUBJECT_RELAX_RULES = {
-    "math": ["netflix.com", "primevideo.com"],
+    "math": ["netflix.com"],
     "reading": ["youtube.com"],
     "english": ["youtube.com"],
     "literature": ["youtube.com"],
@@ -86,20 +92,22 @@ DEFAULT_USER_STATS = {
     "level": 1,
     "buddy_email": "",
     "accountability_enabled": False,
+    "energy_map": {},
 }
 
 
 # ---------- FILE HELPERS ----------
 def load_users():
     try:
-        with open("data/users.json") as f:
+        with open(USERS_FILE) as f:
             users = json.load(f)
             return normalize_users(users)
     except:
         return []
 
 def save_users(data):
-    with open("data/users.json", "w") as f:
+    os.makedirs(DATA_DIR, exist_ok=True)
+    with open(USERS_FILE, "w") as f:
         json.dump(normalize_users(data), f, indent=4)
 
 
@@ -126,19 +134,20 @@ def normalize_users(users):
 
 def load_plans():
     try:
-        with open("data/plans.json") as f:
+        with open(PLANS_FILE) as f:
             return json.load(f)
     except:
         return []
 
 def save_plans(data):
-    with open("data/plans.json", "w") as f:
+    os.makedirs(DATA_DIR, exist_ok=True)
+    with open(PLANS_FILE, "w") as f:
         json.dump(data, f, indent=4)
 
 
 def load_user_stats():
     try:
-        with open("data/user_stats.json") as f:
+        with open(USER_STATS_FILE) as f:
             data = json.load(f)
             return data if isinstance(data, dict) else {}
     except:
@@ -146,7 +155,8 @@ def load_user_stats():
 
 
 def save_user_stats(data):
-    with open("data/user_stats.json", "w") as f:
+    os.makedirs(DATA_DIR, exist_ok=True)
+    with open(USER_STATS_FILE, "w") as f:
         json.dump(data, f, indent=4)
 
 
@@ -241,6 +251,188 @@ def parse_iso_datetime(value):
         return datetime.fromisoformat(value)
     except (TypeError, ValueError):
         return None
+
+
+def parse_time_to_hour(value, fallback=23):
+    if not value or ":" not in str(value):
+        return fallback
+
+    try:
+        hour = int(str(value).split(":", 1)[0])
+        return max(0, min(23, hour))
+    except (TypeError, ValueError):
+        return fallback
+
+
+def get_current_plan_for_user(username):
+    plans = load_plans()
+    plan_date = session.get("current_plan_date")
+
+    if plan_date:
+        for plan in reversed(plans):
+            if plan.get("user") == username and plan.get("date") == plan_date:
+                return plan
+
+    for plan in reversed(plans):
+        if plan.get("user") == username:
+            return plan
+
+    return None
+
+
+def update_energy_map_for_user(username, energy_level):
+    if not username:
+        return
+
+    try:
+        level = int(energy_level)
+    except (TypeError, ValueError):
+        return
+
+    if level < 1 or level > 5:
+        return
+
+    now_hour = datetime.now().hour
+    stats = get_user_stats(username)
+    energy_map = stats.get("energy_map", {}) if isinstance(stats, dict) else {}
+    bucket = energy_map.get(str(now_hour), {"sum": 0, "count": 0})
+    bucket_sum = int(bucket.get("sum", 0)) + level
+    bucket_count = int(bucket.get("count", 0)) + 1
+    energy_map[str(now_hour)] = {"sum": bucket_sum, "count": bucket_count}
+    update_user_stats(username, {"energy_map": energy_map})
+
+
+def get_energy_peak_hour(username):
+    stats = get_user_stats(username)
+    energy_map = stats.get("energy_map", {}) if isinstance(stats, dict) else {}
+
+    peak_hour = None
+    peak_avg = 0
+    for hour_key, bucket in energy_map.items():
+        bucket_sum = int((bucket or {}).get("sum", 0))
+        bucket_count = int((bucket or {}).get("count", 0))
+        if bucket_count <= 0:
+            continue
+
+        avg = bucket_sum / bucket_count
+        if avg > peak_avg:
+            peak_avg = avg
+            peak_hour = int(hour_key)
+
+    return peak_hour, round(peak_avg, 2)
+
+
+def build_focus_genome(username):
+    plans = load_plans()
+    user_plans = [p for p in plans if p.get("user") == username]
+
+    hourly_pressure = Counter()
+    weekday_pressure = Counter()
+    domain_pressure = Counter()
+    subject_pressure = Counter()
+
+    for plan in user_plans:
+        for event in plan.get("focus_genome_events", []) or []:
+            domain = str(event.get("domain", "")).strip().lower()
+            subject = str(event.get("subject", "")).strip()
+            hour = int(event.get("hour", -1))
+            weekday = str(event.get("weekday", "")).strip()
+
+            if domain:
+                domain_pressure[domain] += 1
+            if subject:
+                subject_pressure[subject] += 1
+            if 0 <= hour <= 23:
+                hourly_pressure[hour] += 1
+            if weekday:
+                weekday_pressure[weekday] += 1
+
+    top_hour = hourly_pressure.most_common(1)[0][0] if hourly_pressure else None
+    top_day = weekday_pressure.most_common(1)[0][0] if weekday_pressure else "N/A"
+    top_domains = domain_pressure.most_common(5)
+    top_subjects = subject_pressure.most_common(3)
+
+    strategy_cards = []
+    if top_hour is not None:
+        strategy_cards.append(
+            f"High-risk distraction window is around {top_hour:02d}:00. Start a deep-focus block 15 minutes earlier."
+        )
+    if top_day != "N/A":
+        strategy_cards.append(
+            f"Most distraction-heavy day is {top_day}. Pre-schedule lighter review tasks there to keep momentum."
+        )
+    if top_domains:
+        strategy_cards.append(
+            f"Top trigger domain: {top_domains[0][0]}. Keep it blocked until at least 80% plan completion."
+        )
+
+    return {
+        "top_hour": top_hour,
+        "top_day": top_day,
+        "top_domains": [{"domain": d, "count": c} for d, c in top_domains],
+        "top_subjects": [{"subject": s, "count": c} for s, c in top_subjects],
+        "strategy_cards": strategy_cards,
+    }
+
+
+def build_recovery_plan(username, sleep_start, sleep_end):
+    plans = load_plans()
+    user_plans = [p for p in plans if p.get("user") == username]
+    if not user_plans:
+        return {"extra_blocks": 0, "note": "No previous plan. Fresh start today."}
+
+    previous = user_plans[-1]
+    remaining = max(0, int(previous.get("total_study_sessions", 0)) - int(previous.get("completed_study_sessions", 0)))
+    if remaining == 0:
+        return {"extra_blocks": 0, "note": "No recovery needed. Last plan was completed."}
+
+    sleep_start_hour = parse_time_to_hour(sleep_start, fallback=23)
+    sleep_end_hour = parse_time_to_hour(sleep_end, fallback=7)
+    if sleep_end_hour <= sleep_start_hour:
+        sleep_hours = (24 - sleep_start_hour) + sleep_end_hour
+    else:
+        sleep_hours = sleep_end_hour - sleep_start_hour
+
+    # Preserve rest quality by never adding more than 2 catch-up blocks per day.
+    extra_blocks = min(2, remaining)
+    note = f"Recovery mode: carry {remaining} unfinished block(s), add {extra_blocks} smart catch-up block(s), keep ~{sleep_hours}h sleep window."
+    return {"extra_blocks": extra_blocks, "note": note}
+
+
+def build_live_room_snapshot(username):
+    stats = get_user_stats(username)
+    buddy_email = str(stats.get("buddy_email", "")).strip()
+    current_plan = get_current_plan_for_user(username)
+
+    me_payload = {
+        "user": username,
+        "progress_percent": int((current_plan or {}).get("progress_percent", 0)),
+        "completed": int((current_plan or {}).get("completed_study_sessions", 0)),
+        "total": int((current_plan or {}).get("total_study_sessions", 0)),
+        "level": int(stats.get("level", 1)),
+    }
+
+    buddy_payload = None
+    if buddy_email:
+        buddy_plan = None
+        plans = load_plans()
+        for plan in reversed(plans):
+            if str(plan.get("user", "")).strip().lower() == buddy_email.lower():
+                buddy_plan = plan
+                break
+
+        if buddy_plan:
+            buddy_payload = {
+                "user": buddy_email,
+                "progress_percent": int(buddy_plan.get("progress_percent", 0)),
+                "completed": int(buddy_plan.get("completed_study_sessions", 0)),
+                "total": int(buddy_plan.get("total_study_sessions", 0)),
+            }
+
+    return {
+        "me": me_payload,
+        "buddy": buddy_payload,
+    }
 
 
 def get_active_subject_name():
@@ -419,6 +611,14 @@ def build_analytics_snapshot(username):
             top_domains[domain] += int(count)
 
     top_domains_data = [{"domain": domain, "count": count} for domain, count in top_domains.most_common(5)]
+    weak_topic_counter = Counter()
+    for plan in user_plans:
+        for weak in plan.get("weak_topics", []) or []:
+            subject = str(weak.get("subject", "")).strip()
+            if subject:
+                weak_topic_counter[subject] += 1
+
+    focus_genome = build_focus_genome(username)
 
     return {
         "total_productive_minutes": total_productive_minutes,
@@ -430,6 +630,8 @@ def build_analytics_snapshot(username):
         "daily_productive": daily_productive,
         "daily_completion": daily_completion,
         "top_domains": top_domains_data,
+        "weak_topics": [{"subject": s, "count": c} for s, c in weak_topic_counter.most_common(5)],
+        "focus_genome": focus_genome,
     }
 
 
@@ -466,6 +668,19 @@ def get_focus_state_snapshot():
         else:
             blocked_domains, allowed_domains, policy_tag = get_domain_policy_for_subject(active_subject)
 
+            # Extra context-aware restrictions based on subject and weak-topic pressure.
+            subject_value = (active_subject or "").strip().lower()
+            if "coding" in subject_value or "program" in subject_value:
+                if "reddit.com" not in blocked_domains:
+                    blocked_domains.append("reddit.com")
+                if "x.com" not in blocked_domains:
+                    blocked_domains.append("x.com")
+
+            current_plan = get_current_plan_for_user(session.get("user"))
+            weak_topics = [w for w in (current_plan or {}).get("weak_topics", []) if str(w.get("subject", "")).strip().lower() == subject_value]
+            if weak_topics and "facebook.com" not in blocked_domains:
+                blocked_domains.append("facebook.com")
+
             # Automatically unlock YouTube at 80%.
             if progress["percent"] >= 80 and "youtube.com" in blocked_domains:
                 blocked_domains.remove("youtube.com")
@@ -485,6 +700,10 @@ def get_focus_state_snapshot():
         "hard_mode": hard_mode,
         "emergency_break_remaining": emergency_remaining,
         "policy_tag": policy_tag,
+        "active_context": {
+            "subject": active_subject,
+            "weak_subject_pressure": len((get_current_plan_for_user(session.get("user")) or {}).get("weak_topics", [])),
+        },
         **progress,
     }
 
@@ -494,15 +713,26 @@ def convert_time(t):
     return h + m / 60
 
 
+def is_valid_email(value):
+    if not value:
+        return False
+
+    # Lightweight email validation for auth input.
+    return bool(re.fullmatch(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}", value.strip()))
+
+
 # ---------- AUTH ----------
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
     if request.method == "POST":
         users = load_users()
-        username = request.form["username"].strip()
+        username = request.form["username"].strip().lower()
+
+        if not is_valid_email(username):
+            return render_template("signup.html", error="Please enter a valid email address.")
 
         if any(u["username"].lower() == username.lower() for u in users):
-            return render_template("signup.html", error="That username already exists.")
+            return render_template("signup.html", error="That email is already registered.")
 
         users.append({
             "username": username,
@@ -517,8 +747,9 @@ def signup():
 def login():
     if request.method == "POST":
         users = load_users()
+        login_email = request.form.get("username", "").strip().lower()
         for u in users:
-            if u["username"] == request.form["username"] and u["password"] == request.form["password"]:
+            if u["username"].strip().lower() == login_email and u["password"] == request.form["password"]:
                 session["user"] = u["username"]
                 # Keep buddy email synced to the identity used to log in.
                 update_user_stats(session["user"], {"buddy_email": session["user"]})
@@ -544,8 +775,11 @@ def input_page():
         selected_tier = request.form.get("pomodoroTier", "standard")
         study_minutes, break_minutes = POMODORO_TIERS.get(selected_tier, POMODORO_TIERS["standard"])
         accountability_enabled = request.form.get("accountabilityEnabled") == "on"
-        buddy_email = session.get("user", "").strip()
+        buddy_email = str(request.form.get("buddyEmail", "")).strip() or session.get("user", "").strip()
         hard_mode = request.form.get("hardMode") == "on"
+        baseline_energy = int(request.form.get("baselineEnergy", 3))
+        sleep_start = request.form.get("sleepStart", "23:00")
+        sleep_end = request.form.get("sleepEnd", "07:00")
 
         subjects = []
         for i in range(1, count + 1):
@@ -567,12 +801,33 @@ def input_page():
 
         time_slots.sort(key=lambda slot: slot[0])
 
+        # Put harder subjects earlier when historical energy signal suggests better focus.
+        subjects.sort(
+            key=lambda s: {"hard": 0, "medium": 1, "easy": 2}.get(str(s.get("difficulty", "easy")).lower(), 2)
+        )
+
         schedule = generate_schedule(
             subjects,
             time_slots,
             study_minutes=study_minutes,
             break_minutes=break_minutes
         )
+
+        recovery = build_recovery_plan(session.get("user"), sleep_start, sleep_end)
+        extra_blocks = int(recovery.get("extra_blocks", 0))
+        if extra_blocks > 0:
+            first_subject = next((s.get("name", "Recovery") for s in subjects if s.get("name")), "Recovery")
+            current_recovery_start = time_slots[-1][1] if time_slots else 20
+            for _ in range(extra_blocks):
+                current_recovery_end = current_recovery_start + (study_minutes / 60)
+                schedule.append({
+                    "type": "study",
+                    "subject": f"Recovery: {first_subject}",
+                    "start": current_recovery_start,
+                    "end": current_recovery_end,
+                })
+                current_recovery_start = current_recovery_end
+
         schedule.sort(key=lambda item: item["start"])
 
         for item in schedule:
@@ -599,6 +854,9 @@ def input_page():
         session["hard_mode"] = hard_mode
         session["hard_mode_emergency_remaining"] = 0 if hard_mode else HARD_MODE_EMERGENCY_LIMIT
         session["goal_confirmations"] = []
+        session["adaptive_revision_queue"] = []
+        session["recovery_note"] = recovery.get("note", "")
+        session["energy_baseline"] = baseline_energy
 
         # SAVE PLAN
         plans = load_plans()
@@ -620,6 +878,12 @@ def input_page():
             "hard_mode": hard_mode,
             "accountability_enabled": accountability_enabled,
             "buddy_email": buddy_email,
+            "energy_baseline": baseline_energy,
+            "sleep_window": {"start": sleep_start, "end": sleep_end},
+            "confidence_log": [],
+            "weak_topics": [],
+            "focus_genome_events": [],
+            "recovery_note": recovery.get("note", ""),
         })
         save_plans(plans)
         session["current_plan_date"] = plan_date
@@ -630,6 +894,7 @@ def input_page():
                 "buddy_email": buddy_email,
             }
         )
+        update_energy_map_for_user(session["user"], baseline_energy)
 
         return redirect("/schedule")
 
@@ -666,6 +931,9 @@ def progress():
     user_stats = get_user_stats(session.get("user"))
     accountability_summary = build_accountability_summary(session.get("user"))
     xp_to_next_level = max(0, (user_stats["level"] * 120) - user_stats["xp"])
+    energy_peak_hour, energy_peak_score = get_energy_peak_hour(session.get("user"))
+    current_plan = get_current_plan_for_user(session.get("user"))
+    adaptive_queue = (current_plan or {}).get("weak_topics", [])[-3:]
 
     return render_template(
         "progress.html",
@@ -681,6 +949,10 @@ def progress():
         user_stats=user_stats,
         xp_to_next_level=xp_to_next_level,
         accountability_summary=accountability_summary,
+        energy_peak_hour=energy_peak_hour,
+        energy_peak_score=energy_peak_score,
+        recovery_note=(current_plan or {}).get("recovery_note", ""),
+        adaptive_queue=adaptive_queue,
     )
 
 
@@ -786,6 +1058,8 @@ def complete_session():
     target_subject = payload.get("subject")
     target_start = payload.get("start")
     target_end = payload.get("end")
+    energy_level = payload.get("energy_level")
+    confidence_level = payload.get("confidence_level")
     completed_item = None
 
     for index, item in enumerate(current_schedule):
@@ -826,9 +1100,35 @@ def complete_session():
                     plan["completion_bonus_awarded"] = True
 
                 earned_xp += completion_bonus
+
+                try:
+                    confidence_int = int(str(confidence_level or "3"))
+                except (TypeError, ValueError):
+                    confidence_int = 3
+
+                confidence_int = max(1, min(5, confidence_int))
+                confidence_log = plan.get("confidence_log", [])
+                confidence_log.append({
+                    "subject": completed_item.get("subject", ""),
+                    "confidence": confidence_int,
+                    "time": datetime.now().isoformat(),
+                })
+                plan["confidence_log"] = confidence_log
+
+                if confidence_int <= 2:
+                    weak_topics = plan.get("weak_topics", [])
+                    weak_topics.append({
+                        "subject": completed_item.get("subject", ""),
+                        "confidence": confidence_int,
+                        "next_revision": (datetime.now() + timedelta(days=2)).isoformat(),
+                    })
+                    plan["weak_topics"] = weak_topics
+
             plan["xp_earned"] = int(plan.get("xp_earned", 0)) + earned_xp
             break
     save_plans(plans)
+
+    update_energy_map_for_user(session.get("user"), energy_level)
 
     user_stats = get_user_stats(session.get("user"))
     new_xp = user_stats["xp"] + earned_xp
@@ -860,6 +1160,7 @@ def complete_session():
         "completion_bonus": completion_bonus,
         "xp_total": new_xp,
         "level": new_level,
+        "adaptive_hint": "Low-confidence topic added to 48h revision loop." if str(confidence_level) in ["1", "2"] else "Great momentum. Keep going.",
     })
 
 
@@ -1014,6 +1315,7 @@ def history():
     streak_stats = build_streak_stats(history_plans)
     analytics = build_analytics_snapshot(session.get("user"))
     user_stats = get_user_stats(session.get("user"))
+    focus_genome = build_focus_genome(session.get("user"))
 
     return render_template(
         "history.html",
@@ -1023,6 +1325,7 @@ def history():
         streak_stats=streak_stats,
         analytics=analytics,
         user_stats=user_stats,
+        focus_genome=focus_genome,
     )
 
 
@@ -1042,7 +1345,16 @@ def accountability():
 
     stats = get_user_stats(session.get("user"))
     summary = build_accountability_summary(session.get("user"))
-    return render_template("accountability.html", stats=stats, summary=summary)
+    live_room = build_live_room_snapshot(session.get("user"))
+    return render_template("accountability.html", stats=stats, summary=summary, live_room=live_room)
+
+
+@app.route("/live-room/status")
+def live_room_status():
+    if "user" not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    return jsonify(build_live_room_snapshot(session.get("user")))
 
 
 @app.route("/extension-setup")
@@ -1095,6 +1407,15 @@ def analytics_domain_hit():
             hits = plan.get("blocked_domain_hits", {})
             hits[domain] = int(hits.get(domain, 0)) + 1
             plan["blocked_domain_hits"] = hits
+            events = plan.get("focus_genome_events", [])
+            events.append({
+                "domain": domain,
+                "subject": get_active_subject_name(),
+                "hour": datetime.now().hour,
+                "weekday": datetime.now().strftime("%A"),
+                "time": datetime.now().isoformat(),
+            })
+            plan["focus_genome_events"] = events
             break
     save_plans(plans)
 

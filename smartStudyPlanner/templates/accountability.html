@@ -14,6 +14,24 @@
         <p id="summaryText">{{ summary }}</p>
     </div>
 
+    <div class="focus-panel">
+        <h3>Live Accountability Room</h3>
+        <p class="timer-meta">Your progress updates every 15 seconds.</p>
+
+        <div class="streak-grid">
+            <div class="streak-card">
+                <div class="streak-label">You</div>
+                <div class="streak-value" id="liveMePercent">{{ live_room.me.progress_percent }}%</div>
+                <div class="timer-meta" id="liveMeBlocks">{{ live_room.me.completed }}/{{ live_room.me.total }} blocks</div>
+            </div>
+            <div class="streak-card">
+                <div class="streak-label">Buddy</div>
+                <div class="streak-value" id="liveBuddyPercent">{% if live_room.buddy %}{{ live_room.buddy.progress_percent }}%{% else %}--{% endif %}</div>
+                <div class="timer-meta" id="liveBuddyBlocks">{% if live_room.buddy %}{{ live_room.buddy.completed }}/{{ live_room.buddy.total }} blocks{% else %}Buddy plan not found{% endif %}</div>
+            </div>
+        </div>
+    </div>
+
     {% if stats.buddy_email %}
     <a class="button-link" href="mailto:{{ stats.buddy_email }}?subject=Study%20Accountability%20Update&body={{ summary|urlencode }}">Share via Email</a>
     {% endif %}
@@ -28,6 +46,36 @@ function copySummary() {
         alert('Summary copied to clipboard.');
     });
 }
+
+function refreshLiveRoom() {
+    fetch('/live-room/status')
+        .then(response => response.json())
+        .then(data => {
+            const mePercent = document.getElementById('liveMePercent');
+            const meBlocks = document.getElementById('liveMeBlocks');
+            const buddyPercent = document.getElementById('liveBuddyPercent');
+            const buddyBlocks = document.getElementById('liveBuddyBlocks');
+
+            if (mePercent) {
+                mePercent.innerText = `${data.me.progress_percent}%`;
+            }
+            if (meBlocks) {
+                meBlocks.innerText = `${data.me.completed}/${data.me.total} blocks`;
+            }
+
+            if (data.buddy) {
+                if (buddyPercent) {
+                    buddyPercent.innerText = `${data.buddy.progress_percent}%`;
+                }
+                if (buddyBlocks) {
+                    buddyBlocks.innerText = `${data.buddy.completed}/${data.buddy.total} blocks`;
+                }
+            }
+        })
+        .catch(() => {});
+}
+
+setInterval(refreshLiveRoom, 15000);
 </script>
 
 {% endblock %}

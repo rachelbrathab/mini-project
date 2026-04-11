@@ -65,6 +65,26 @@
 </div>
 
 <div class="focus-panel">
+    <h3>Energy Mapping</h3>
+    <p class="timer-meta">Peak focus window: <strong>{% if energy_peak_hour is not none %}{{ "%02d"|format(energy_peak_hour) }}:00 (avg {{ energy_peak_score }}){% else %}Collecting data...{% endif %}</strong></p>
+    <p class="timer-meta">Recovery planner: {{ recovery_note if recovery_note else 'No recovery carry-over needed today.' }}</p>
+</div>
+
+<div class="focus-panel">
+    <h3>Adaptive Revision Loop</h3>
+    {% if adaptive_queue %}
+    <ul>
+        {% for item in adaptive_queue %}
+        <li>{{ item.subject }} - confidence {{ item.confidence }} - revise by {{ item.next_revision }}</li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p class="timer-meta">No weak-topic queue yet. Low-confidence sessions will appear here automatically.</p>
+    {% endif %}
+    <p class="timer-meta" id="adaptiveHint"></p>
+</div>
+
+<div class="focus-panel">
 <h3>Focus Mode</h3>
 <p class="timer-meta">Status: <span id="focusModeStatus" class="focus-status">{{ 'ON' if focus_state.focus_mode else 'OFF' }}</span></p>
 <p class="timer-meta">Study Session: <span id="sessionStatus" class="session-status">{{ 'ACTIVE' if focus_state.session_active else 'INACTIVE' }}</span></p>
@@ -384,6 +404,10 @@ function completeSession(row) {
     }
 
     const payload = getRowData(row);
+    const energyLevelInput = window.prompt('Energy right now (1-5):', '3');
+    const confidenceLevelInput = window.prompt('Confidence on this topic (1-5):', '3');
+    payload.energy_level = Number(energyLevelInput || 3);
+    payload.confidence_level = Number(confidenceLevelInput || 3);
 
     return fetch('/complete-session', {
         method: 'POST',
@@ -396,6 +420,10 @@ function completeSession(row) {
     .then(data => {
         removeChecklistRow(payload);
         updateChecklistProgress(data);
+        const adaptiveHint = document.getElementById('adaptiveHint');
+        if (adaptiveHint && data.adaptive_hint) {
+            adaptiveHint.innerText = data.adaptive_hint;
+        }
         return data;
     });
 }

@@ -34,8 +34,17 @@
         Enable accountability mode
     </label>
 
-    <label>Buddy Email (from your login)</label>
-    <input type="email" name="buddyEmail" id="buddyEmail" value="{{ login_email }}" readonly>
+    <label>Buddy Email (for live room and share updates)</label>
+    <input type="email" name="buddyEmail" id="buddyEmail" value="{{ login_email }}">
+
+    <label>Baseline Energy (1 = low, 5 = peak)</label>
+    <input type="number" name="baselineEnergy" min="1" max="5" value="3" required>
+
+    <label>Sleep Start</label>
+    <input type="time" name="sleepStart" value="23:00" required>
+
+    <label>Sleep End</label>
+    <input type="time" name="sleepEnd" value="07:00" required>
 
     <label class="inline-check" style="margin-top:10px;">
         <input type="checkbox" name="hardMode" id="hardMode">

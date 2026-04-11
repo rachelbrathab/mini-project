@@ -39,6 +39,26 @@
     </div>
 </div>
 
+<div class="card">
+    <h3>Focus Genome</h3>
+    <p class="timer-meta">Peak distraction day: {{ focus_genome.top_day }} | Peak distraction hour: {% if focus_genome.top_hour is not none %}{{ "%02d"|format(focus_genome.top_hour) }}:00{% else %}N/A{% endif %}</p>
+    {% if focus_genome.top_domains %}
+    <ul>
+        {% for item in focus_genome.top_domains %}
+        <li>{{ item.domain }} - {{ item.count }} attempts</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    {% if focus_genome.strategy_cards %}
+    <div class="streak-grid">
+        {% for card in focus_genome.strategy_cards %}
+        <div class="streak-card">{{ card }}</div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
 {% for plan in plans %}
     <div class="card">
         <h4>{{ plan.date }}</h4>
@@ -55,6 +75,9 @@
         </div>
         <p class="timer-meta">Progress: {{ plan.completed_study_sessions }} of {{ plan.study_sessions }} study blocks ({{ plan.progress_percent }}%)</p>
         <p class="reflection-text">🧠 Reflection: {{ plan.reflection }}</p>
+        {% if plan.recovery_note %}
+        <p class="timer-meta">Recovery planner: {{ plan.recovery_note }}</p>
+        {% endif %}
 
         <ul>
             {% for s in plan.schedule %}
