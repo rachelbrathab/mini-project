@@ -1,6 +1,6 @@
 # Mini Project
 
-This repository is the parent project workspace for the Smart Study Planner system.
+This repository is the parent workspace for Serenra, a smart study planning system.
 
 It includes:
 
@@ -29,12 +29,15 @@ The core app lives in `smartStudyPlanner`.
 
 Features include:
 
-- User login/signup
+- Modern landing page (`/`) with Login/Sign Up actions
+- User login/signup (`/login`, `/signup`)
+- Post-login dashboard (`/dashboard`)
 - Study plan generation based on subjects and available time
 - Pomodoro modes (light, standard, deep)
 - Progress tracking and undo
 - Focus mode controls
 - Analytics and accountability pages
+- Protected routes for planner pages (session-based)
 
 ## Local Setup
 
@@ -79,6 +82,8 @@ To load it:
 3. Click Load unpacked
 4. Select `smartStudyPlanner/focus-extension`
 5. Reload after extension code changes
+
+Note: Local development hosts (`127.0.0.1` / `localhost`) are exempt from extension blocking.
 
 ## Data Files
 

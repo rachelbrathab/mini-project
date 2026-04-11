@@ -1,10 +1,14 @@
-# Smart Study Planner
+# Serenra
 
-Smart Study Planner is a Flask web app that helps students build study schedules, track session completion, and view progress history.
+Serenra is a Flask web app that helps students build study schedules, protect focus time, and track learning progress.
 
 ## Features
 
+- Landing page at `/` with modern hero + feature highlights
 - User signup/login/logout with session-based auth
+- Dedicated auth routes: `/login`, `/signup`
+- Post-login dashboard route: `/dashboard`
+- Protected planner routes for authenticated users
 - Custom study-plan generation from:
 	- Subjects and topic counts
 	- Available time slots
@@ -15,6 +19,7 @@ Smart Study Planner is a Flask web app that helps students build study schedules
 	- Undo last completed session
 	- Percent complete and next session
 - Study history dashboard with subject distribution chart
+- Browser extension integration for distraction blocking
 
 ## Tech Stack
 
@@ -66,12 +71,12 @@ http://127.0.0.1:5000
 
 ## How to Use
 
-1. Sign up at `/signup` (or log in at `/login`).
-2. On `/`, enter subjects, difficulty, topic counts, and time slots.
-3. Choose a Pomodoro tier and generate a plan.
-4. View schedule at `/schedule`.
-5. Track completion at `/progress`.
-6. Review past plans at `/history`.
+1. Open `/` to access the Serenra landing page.
+2. Sign up at `/signup` or log in at `/login`.
+3. After login, you are redirected to `/dashboard`.
+4. Continue to planner input (`/input`) and generate a schedule.
+5. View schedule at `/schedule` and track completion at `/progress`.
+6. Review history at `/history` and insights at `/analytics`.
 
 ## Deployment
 
@@ -107,6 +112,7 @@ Current persistence uses local JSON files:
 
 - `data/users.json`
 - `data/plans.json`
+- `data/user_stats.json`
 
 On free/ephemeral hosting, local disk can reset on redeploy/restart. For durable production data, migrate to a database (for example SQLite or Postgres).
 
