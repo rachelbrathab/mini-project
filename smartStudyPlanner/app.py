@@ -13,6 +13,20 @@ from collections import Counter
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "secret123")
 
+PUBLIC_PATHS = {
+    "/",
+    "/login",
+    "/signup",
+    "/logout",
+    "/manifest.webmanifest",
+    "/service-worker.js",
+    "/pwa-icon.png",
+}
+
+PUBLIC_PREFIXES = (
+    "/static/",
+)
+
 DATA_DIR = os.path.join(app.root_path, "data")
 USERS_FILE = os.path.join(DATA_DIR, "users.json")
 PLANS_FILE = os.path.join(DATA_DIR, "plans.json")
@@ -724,14 +738,14 @@ def is_valid_email(value):
 # ---------- AUTH ----------
 @app.route("/")
 def home():
-    if "user" in session:
-        return redirect("/input")
-
     return render_template("home.html")
 
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
+    if "user" in session:
+        return redirect("/dashboard")
+
     if request.method == "POST":
         users = load_users()
         username = request.form["username"].strip().lower()
@@ -753,6 +767,9 @@ def signup():
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
+    if "user" in session:
+        return redirect("/dashboard")
+
     if request.method == "POST":
         users = load_users()
         login_email = request.form.get("username", "").strip().lower()
@@ -761,7 +778,7 @@ def login():
                 session["user"] = u["username"]
                 # Keep buddy email synced to the identity used to log in.
                 update_user_stats(session["user"], {"buddy_email": session["user"]})
-                return redirect("/input")
+                return redirect(url_for("dashboard", auth="1"))
         return render_template("login.html", error="Invalid username or password.")
     return render_template("login.html")
 
@@ -769,7 +786,28 @@ def login():
 @app.route("/logout")
 def logout():
     session.clear()
-    return redirect("/")
+    return render_template("logout.html")
+
+
+@app.route("/dashboard")
+def dashboard():
+    if "user" not in session:
+        return redirect("/login")
+
+    return render_template("dashboard.html", login_email=session.get("user", ""))
+
+
+@app.before_request
+def enforce_auth_for_protected_routes():
+    path = request.path or "/"
+
+    if path in PUBLIC_PATHS or any(path.startswith(prefix) for prefix in PUBLIC_PREFIXES):
+        return None
+
+    if "user" not in session:
+        return redirect("/login")
+
+    return None
 
 
 # ---------- INPUT ----------

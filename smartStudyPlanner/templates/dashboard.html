@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Dashboard | Smart Study Planner</title>
+    <meta name="theme-color" content="#213537">
+    <link rel="manifest" href="/manifest.webmanifest">
+    <link rel="icon" href="/static/serenra-icon.png">
+    <link rel="apple-touch-icon" href="/static/serenra-icon.png">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet">
+</head>
+<body class="landing-page dashboard-page">
+
+<!-- Dashboard placeholder content -->
+<main class="dashboard-main">
+    <section class="dashboard-card" aria-label="Dashboard welcome panel">
+        <h1>Welcome, {{ login_email }}</h1>
+        <p>You are successfully logged in. Start planning your next productive study session.</p>
+
+        <div class="dashboard-actions">
+            <a href="/input" class="landing-cta primary">Go to Planner</a>
+            <button type="button" id="logoutBtn" class="landing-cta">Logout</button>
+        </div>
+    </section>
+</main>
+
+<script>
+// Sync browser auth state after successful server-side login.
+const params = new URLSearchParams(window.location.search);
+if (params.get('auth') === '1') {
+    localStorage.setItem('isAuthenticated', 'true');
+    window.history.replaceState({}, document.title, '/dashboard');
+}
+
+if (localStorage.getItem('isAuthenticated') !== 'true') {
+    window.location.href = '/login';
+}
+
+document.getElementById('logoutBtn').addEventListener('click', () => {
+    window.location.href = '/logout';
+});
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js').catch(() => {});
+    });
+}
+</script>
+
+</body>
+</html>

@@ -23,15 +23,9 @@ body {
     width: min(1120px, 100%);
     margin: 0 auto;
     display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 16px;
-}
-
-.landing-logo-wrap {
-    display: inline-flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-end;
+    gap: 16px;
 }
 
 .landing-logo {
@@ -54,6 +48,12 @@ body {
     border-radius: 999px;
     font-weight: 600;
     background: rgba(255, 255, 255, 0.72);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.landing-auth-link:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 16px rgba(19, 38, 40, 0.13);
 }
 
 .landing-auth-link.primary {
@@ -64,10 +64,10 @@ body {
 
 .landing-main {
     width: min(1120px, 100%);
-    margin: 8px auto 0;
+    margin: 18px auto 0;
     display: grid;
     grid-template-columns: minmax(0, 1fr);
-    gap: 28px;
+    gap: 22px;
 }
 
 .landing-hero {
@@ -76,11 +76,39 @@ body {
     border-radius: 24px;
     padding: clamp(24px, 4vw, 44px);
     box-shadow: 0 18px 34px rgba(25, 43, 45, 0.16);
+    text-align: center;
+    animation: fadeRise 0.55s ease;
+}
+
+.landing-hero-logo-wrap {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
+.landing-app-name {
+    margin: 0;
+    font-size: clamp(2rem, 4.4vw, 3.1rem);
+    line-height: 1.1;
+    color: #1a2f31;
+}
+
+.landing-tagline {
+    margin: 12px auto 8px;
+    font-size: clamp(1rem, 2vw, 1.2rem);
+    color: #2e4d50;
+    font-weight: 500;
+}
+
+.landing-description {
+    margin: 0 auto;
+    color: #2f4f52;
+    max-width: 64ch;
 }
 
 .landing-hero h1 {
-    margin: 0 0 10px;
-    font-size: clamp(1.8rem, 3.8vw, 3rem);
+    margin: 0;
+    font-size: clamp(1.8rem, 3.8vw, 2.8rem);
     line-height: 1.12;
     color: #1a2f31;
 }
@@ -96,6 +124,7 @@ body {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
+    justify-content: center;
 }
 
 .landing-cta {
@@ -106,6 +135,12 @@ body {
     border: 1px solid rgba(33, 53, 55, 0.34);
     color: #213537;
     background: rgba(255, 255, 255, 0.74);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.landing-cta:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 16px rgba(19, 38, 40, 0.13);
 }
 
 .landing-cta.primary {
@@ -116,7 +151,7 @@ body {
 
 .landing-features {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 14px;
 }
 
@@ -126,6 +161,7 @@ body {
     border-radius: 16px;
     padding: 18px;
     box-shadow: 0 8px 18px rgba(0, 0, 0, 0.08);
+    animation: fadeRise 0.55s ease;
 }
 
 .feature-card h2 {
@@ -136,6 +172,69 @@ body {
 .feature-card p {
     margin: 0;
     color: #466568;
+}
+
+.feature-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #163033;
+    margin-bottom: 10px;
+    background: linear-gradient(150deg, rgba(171, 208, 192, 0.9), rgba(131, 175, 161, 0.9));
+    border: 1px solid rgba(33, 53, 55, 0.1);
+}
+
+.dashboard-main {
+    min-height: calc(100vh - 48px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.dashboard-card {
+    width: min(100%, 600px);
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(33, 53, 55, 0.12);
+    border-radius: 20px;
+    padding: clamp(24px, 5vw, 40px);
+    box-shadow: 0 18px 34px rgba(25, 43, 45, 0.16);
+    text-align: center;
+    animation: fadeRise 0.55s ease;
+}
+
+.dashboard-card h1 {
+    margin: 0 0 10px;
+}
+
+.dashboard-card p {
+    margin: 0;
+    color: #456366;
+}
+
+.dashboard-actions {
+    margin-top: 22px;
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+@keyframes fadeRise {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .auth-page {
@@ -470,7 +569,7 @@ li {
 
 @media (max-width: 900px) {
     .landing-features {
-        grid-template-columns: minmax(0, 1fr);
+        grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
 
@@ -486,6 +585,10 @@ li {
     .landing-auth-nav {
         flex-wrap: wrap;
         justify-content: flex-end;
+    }
+
+    .landing-features {
+        grid-template-columns: minmax(0, 1fr);
     }
 
     .sidebar {

@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Serenra | Study with Clarity</title>
+    <title>Smart Study Planner | Learn Better Every Day</title>
     <meta name="theme-color" content="#213537">
     <link rel="manifest" href="/manifest.webmanifest">
     <link rel="icon" href="/static/serenra-icon.png">
@@ -13,10 +13,8 @@
 </head>
 <body class="landing-page">
 
+<!-- Top-right authentication actions -->
 <header class="landing-header">
-    <div class="landing-logo-wrap">
-        <img src="/static/serenra-logo.png" alt="Serenra logo" class="landing-logo" onerror="this.style.display='none'">
-    </div>
     <nav class="landing-auth-nav" aria-label="Authentication">
         <a href="/login" class="landing-auth-link">Login</a>
         <a href="/signup" class="landing-auth-link primary">Sign Up</a>
@@ -24,31 +22,46 @@
 </header>
 
 <main class="landing-main">
+    <!-- Hero section with centered logo and app summary -->
     <section class="landing-hero">
-        <h1>Serenra helps you study with calm focus.</h1>
-        <p>Build realistic plans, protect your attention, and track your progress session by session.</p>
-        <div class="landing-cta-row">
-            <a href="/signup" class="landing-cta primary">Create Account</a>
-            <a href="/login" class="landing-cta">I Already Have an Account</a>
+        <div class="landing-hero-logo-wrap">
+            <img src="/static/serenra-logo.png" alt="Smart Study Planner logo" class="landing-logo" onerror="this.style.display='none'">
+        </div>
+        <h1 class="landing-app-name">Smart Study Planner</h1>
+        <p class="landing-tagline">Plan smarter, focus deeper, and finish stronger.</p>
+        <p class="landing-description">Smart Study Planner turns your study goals into realistic daily action plans with focus support, adaptive recommendations, and progress insights that keep you consistent.</p>
+        <div class="landing-cta-row" aria-label="Call to action">
+            <a href="/signup" class="landing-cta primary">Get Started</a>
+            <a href="/login" class="landing-cta">Continue Learning</a>
         </div>
     </section>
 
-    <section class="landing-features" aria-label="Serenra features">
+    <!-- Feature highlight section -->
+    <section class="landing-features" aria-label="Smart Study Planner features">
         <article class="feature-card">
-            <h2>Smart Planning</h2>
-            <p>Generate study schedules by subject difficulty, available time slots, and focus tier.</p>
+            <div class="feature-icon" aria-hidden="true">AI</div>
+            <h2>AI-powered Study Planning</h2>
+            <p>Instantly build balanced study plans based on your subjects, workload, and available time.</p>
         </article>
         <article class="feature-card">
-            <h2>Focus Mode</h2>
-            <p>Reduce distractions with guided sessions, break timing, and extension support.</p>
+            <div class="feature-icon" aria-hidden="true">SC</div>
+            <h2>Personalized Schedules</h2>
+            <p>Create routines that match your energy levels and learning pace for better retention.</p>
         </article>
         <article class="feature-card">
-            <h2>Progress Analytics</h2>
-            <p>Review completion history, streaks, confidence signals, and productivity trends.</p>
+            <div class="feature-icon" aria-hidden="true">PT</div>
+            <h2>Progress Tracking</h2>
+            <p>Monitor completed sessions, streaks, and productivity trends through clear analytics.</p>
         </article>
         <article class="feature-card">
-            <h2>Accountability</h2>
-            <p>Use buddy mode and live-room features to stay consistent and motivated.</p>
+            <div class="feature-icon" aria-hidden="true">SR</div>
+            <h2>Smart Reminders</h2>
+            <p>Stay on track with timely focus nudges and session reminders during busy days.</p>
+        </article>
+        <article class="feature-card">
+            <div class="feature-icon" aria-hidden="true">AL</div>
+            <h2>Adaptive Learning Suggestions</h2>
+            <p>Receive targeted revision hints and next-step recommendations based on your performance.</p>
         </article>
     </section>
 </main>
