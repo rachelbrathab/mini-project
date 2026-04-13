@@ -747,20 +747,26 @@ def signup():
         return redirect("/dashboard")
 
     if request.method == "POST":
+        print("[DEBUG] Received POST to /signup")
+        print("[DEBUG] Form data:", dict(request.form))
         users = load_users()
         username = request.form["username"].strip().lower()
 
         if not is_valid_email(username):
+            print("[DEBUG] Invalid email format:", username)
             return render_template("signup.html", error="Please enter a valid email address.")
 
         if any(u["username"].lower() == username.lower() for u in users):
+            print("[DEBUG] Email already registered:", username)
             return render_template("signup.html", error="That email is already registered.")
 
         users.append({
             "username": username,
             "password": request.form["password"]
         })
+        print("[DEBUG] Adding new user:", username)
         save_users(users)
+        print("[DEBUG] Users after save:", users)
         return redirect("/login")
     return render_template("signup.html")
 
