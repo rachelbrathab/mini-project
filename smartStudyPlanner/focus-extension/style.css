@@ -10,25 +10,28 @@ body {
 }
 
 .popup {
-  width: 292px;
-  padding: 14px;
+  width: 380px;
+  max-width: 95vw;
+  padding: 28px 24px 20px 24px;
   background: #ffffff;
   border: 1px solid #b8c1c3;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.14);
+  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.16);
+  border-radius: 18px;
+  margin: 0 auto;
 }
 
 .popup-title {
-  margin: 0 0 2px;
-  font-size: 20px;
-  line-height: 1.05;
+  margin: 0 0 8px;
+  font-size: 26px;
+  line-height: 1.15;
   font-weight: 800;
   letter-spacing: -0.01em;
   color: #2e4b50;
 }
 
 .build-label {
-  margin: 0 0 8px;
-  font-size: 11px;
+  margin: 0 0 14px;
+  font-size: 13px;
   letter-spacing: 0.09em;
   text-transform: uppercase;
   color: #607f83;
@@ -36,11 +39,11 @@ body {
 }
 
 .mantra {
-  margin: 0 0 10px;
-  font-size: 13px;
+  margin: 0 0 18px;
+  font-size: 16px;
   font-weight: 600;
   color: #4b5f63;
-  line-height: 1.35;
+  line-height: 1.5;
 }
 
 .mantra.is-active {
@@ -48,9 +51,9 @@ body {
 }
 
 .status-text {
-  margin: 7px 0;
-  font-size: 13px;
-  line-height: 1.35;
+  margin: 10px 0 4px 0;
+  font-size: 15px;
+  line-height: 1.4;
   letter-spacing: 0;
   font-weight: 600;
   color: #3b5459;
@@ -62,18 +65,18 @@ body {
 }
 
 .hint-text {
-  margin: 8px 0 0;
-  font-size: 12px;
-  line-height: 1.35;
+  margin: 12px 0 0;
+  font-size: 13px;
+  line-height: 1.4;
   color: #5a7478;
-  min-height: 16px;
+  min-height: 18px;
 }
 
 .emergency-timer {
-  margin: 7px 0 0;
-  padding: 6px 8px;
-  border-radius: 8px;
-  font-size: 12px;
+  margin: 12px 0 0;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 14px;
   font-weight: 700;
   color: #7a460b;
   background: #f8ead9;
@@ -82,12 +85,12 @@ body {
 
 .badge {
   display: inline-block;
-  padding: 2px 10px;
+  padding: 4px 16px;
   border-radius: 999px;
   background: rgba(83, 109, 113, 0.2);
   color: #526a6f;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 15px;
   vertical-align: middle;
 }
 
@@ -98,21 +101,22 @@ body {
 
 .actions {
   display: grid;
-  gap: 8px;
-  margin-top: 10px;
+  gap: 12px;
+  margin-top: 18px;
 }
 
 button {
   width: 100%;
   border: none;
-  border-radius: 8px;
-  padding: 10px;
+  border-radius: 10px;
+  padding: 14px;
   color: #fff;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1.2;
   letter-spacing: 0;
+  transition: background 0.15s, filter 0.15s;
 }
 
 #startBtn {
