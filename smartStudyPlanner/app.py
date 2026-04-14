@@ -20,8 +20,10 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY", "secret123")
 load_dotenv()
 MONGO_URI = os.getenv("MONGO_URI")
 client = MongoClient(MONGO_URI)
-db = client["smart_study_planner"]  # Change to your preferred DB name
+DB_NAME = "smart_study_planner"  # Make sure this matches your intended DB name
+db = client[DB_NAME]
 users_collection = db["users"]
+print(f"[DEBUG] Using MongoDB database: {DB_NAME}")
 
 PUBLIC_PATHS = {
     "/",
@@ -751,6 +753,7 @@ def home():
 
 
 
+
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
     if "user" in session:
@@ -761,9 +764,10 @@ def signup():
         print("[DEBUG] Form data:", dict(request.form))
         username = request.form["username"].strip().lower()
 
+        # Enforce email-only usernames
         if not is_valid_email(username):
-            print("[DEBUG] Invalid email format:", username)
-            return render_template("signup.html", error="Please enter a valid email address.")
+            print("[DEBUG] Invalid email format (signup):", username)
+            return render_template("signup.html", error="Please enter a valid email address as your username.")
 
         # Check if user exists in MongoDB
         if users_collection.find_one({"username": username}):
@@ -780,6 +784,7 @@ def signup():
 
 
 
+
 @app.route("/login", methods=["GET", "POST"])
 def login():
     if "user" in session:
@@ -787,6 +792,11 @@ def login():
 
     if request.method == "POST":
         login_email = request.form.get("username", "").strip().lower()
+        # Enforce email-only usernames on login
+        if not is_valid_email(login_email):
+            print("[DEBUG] Invalid email format (login):", login_email)
+            return render_template("login.html", error="Please enter a valid email address as your username.")
+
         user = users_collection.find_one({
             "username": login_email,
             "password": request.form["password"]
