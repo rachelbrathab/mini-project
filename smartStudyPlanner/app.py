@@ -1,6 +1,8 @@
 from flask import Flask, request, render_template, redirect, url_for, session, send_file, send_from_directory
 from flask import jsonify
 from src.planner import generate_schedule, format_time
+from pymongo import MongoClient
+from dotenv import load_dotenv
 import json
 import copy
 import os
@@ -10,8 +12,16 @@ import zipfile
 from datetime import datetime, timedelta, date
 from collections import Counter
 
+
 app = Flask(__name__)
 app.secret_key = os.getenv("FLASK_SECRET_KEY", "secret123")
+
+# --- MongoDB Setup ---
+load_dotenv()
+MONGO_URI = os.getenv("MONGO_URI")
+client = MongoClient(MONGO_URI)
+db = client["smart_study_planner"]  # Change to your preferred DB name
+users_collection = db["users"]
 
 PUBLIC_PATHS = {
     "/",
@@ -111,18 +121,17 @@ DEFAULT_USER_STATS = {
 
 
 # ---------- FILE HELPERS ----------
+
+# --- MongoDB User Helpers ---
 def load_users():
-    try:
-        with open(USERS_FILE) as f:
-            users = json.load(f)
-            return normalize_users(users)
-    except:
-        return []
+    # Return all users as a list of dicts (excluding _id)
+    return list(users_collection.find({}, {"_id": 0}))
 
 def save_users(data):
-    os.makedirs(DATA_DIR, exist_ok=True)
-    with open(USERS_FILE, "w") as f:
-        json.dump(normalize_users(data), f, indent=4)
+    # Replace all users (for compatibility, not recommended for production)
+    users_collection.delete_many({})
+    if data:
+        users_collection.insert_many(data)
 
 
 def normalize_users(users):
@@ -741,6 +750,7 @@ def home():
     return render_template("home.html")
 
 
+
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
     if "user" in session:
@@ -749,26 +759,25 @@ def signup():
     if request.method == "POST":
         print("[DEBUG] Received POST to /signup")
         print("[DEBUG] Form data:", dict(request.form))
-        users = load_users()
         username = request.form["username"].strip().lower()
 
         if not is_valid_email(username):
             print("[DEBUG] Invalid email format:", username)
             return render_template("signup.html", error="Please enter a valid email address.")
 
-        if any(u["username"].lower() == username.lower() for u in users):
+        # Check if user exists in MongoDB
+        if users_collection.find_one({"username": username}):
             print("[DEBUG] Email already registered:", username)
             return render_template("signup.html", error="That email is already registered.")
 
-        users.append({
+        users_collection.insert_one({
             "username": username,
             "password": request.form["password"]
         })
         print("[DEBUG] Adding new user:", username)
-        save_users(users)
-        print("[DEBUG] Users after save:", users)
         return redirect("/login")
     return render_template("signup.html")
+
 
 
 @app.route("/login", methods=["GET", "POST"])
@@ -777,14 +786,16 @@ def login():
         return redirect("/dashboard")
 
     if request.method == "POST":
-        users = load_users()
         login_email = request.form.get("username", "").strip().lower()
-        for u in users:
-            if u["username"].strip().lower() == login_email and u["password"] == request.form["password"]:
-                session["user"] = u["username"]
-                # Keep buddy email synced to the identity used to log in.
-                update_user_stats(session["user"], {"buddy_email": session["user"]})
-                return redirect(url_for("dashboard", auth="1"))
+        user = users_collection.find_one({
+            "username": login_email,
+            "password": request.form["password"]
+        })
+        if user:
+            session["user"] = user["username"]
+            # Keep buddy email synced to the identity used to log in.
+            update_user_stats(session["user"], {"buddy_email": session["user"]})
+            return redirect(url_for("dashboard", auth="1"))
         return render_template("login.html", error="Invalid username or password.")
     return render_template("login.html")
 
