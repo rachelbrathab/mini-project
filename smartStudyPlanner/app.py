@@ -1,9 +1,10 @@
 import sys
+import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from flask import Flask, request, render_template, redirect, url_for, session, send_file, send_from_directory
 from flask import jsonify
-from src.planner import generate_schedule, format_time
+from planner import generate_schedule, format_time
 from pymongo import MongoClient
 from dotenv import load_dotenv
 import json
