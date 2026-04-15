@@ -1,0 +1,3 @@
+# planner.py (moved from src/ to smartStudyPlanner/ for deployment compatibility)
+
+# ...existing code from src/planner.py will be here...
