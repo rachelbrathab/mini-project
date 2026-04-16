@@ -1,20 +1,20 @@
-import sys
+
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from flask import Flask, request, render_template, redirect, url_for, session, send_file, send_from_directory
 from flask import jsonify
 from smartStudyPlanner.planner import generate_schedule, format_time
-from pymongo import MongoClient
 from dotenv import load_dotenv
 import json
 import copy
-import os
 import re
 import io
 import zipfile
 from datetime import datetime, timedelta, date
 from collections import Counter
+from pymongo import MongoClient
+
 
 
 app = Flask(__name__)
@@ -23,11 +23,38 @@ app.secret_key = os.getenv("FLASK_SECRET_KEY", "secret123")
 # --- MongoDB Setup ---
 load_dotenv()
 MONGO_URI = os.getenv("MONGO_URI")
-client = MongoClient(MONGO_URI)
-DB_NAME = "smart_study_planner"  # Make sure this matches your intended DB name
-db = client[DB_NAME]
-users_collection = db["users"]
-print(f"[DEBUG] Using MongoDB database: {DB_NAME}")
+USE_MONGO = False
+users_collection = None
+plans_collection = None
+user_stats_collection = None
+try:
+    if MONGO_URI and MONGO_URI != "invalid":
+        client = MongoClient(MONGO_URI)
+        DB_NAME = os.getenv("MONGO_DB", "smart_study_planner")
+        db = client[DB_NAME]
+        users_collection = db["users"]
+        plans_collection = db["plans"]
+        user_stats_collection = db["user_stats"]
+        USE_MONGO = True
+        print(f"[DEBUG] Using MongoDB database: {DB_NAME}")
+    else:
+        print("[DEBUG] MONGO_URI not set or invalid, using JSON file storage.")
+except Exception as e:
+    print(f"[ERROR] Could not connect to MongoDB: {e}\nFalling back to JSON file storage.")
+    USE_MONGO = False
+
+
+# --- MongoDB Setup (DISCONNECTED for local testing) ---
+# load_dotenv()
+# MONGO_URI = os.getenv("MONGO_URI")
+# client = MongoClient(MONGO_URI)
+# DB_NAME = "smart_study_planner"  # Make sure this matches your intended DB name
+# db = client[DB_NAME]
+# users_collection = db["users"]
+# print(f"[DEBUG] Using MongoDB database: {DB_NAME}")
+
+# Hardcoded test user for local login
+TEST_USER = {"username": "test@example.com", "password": "testpass"}
 
 PUBLIC_PATHS = {
     "/",
@@ -129,39 +156,48 @@ DEFAULT_USER_STATS = {
 # ---------- FILE HELPERS ----------
 
 # --- MongoDB User Helpers ---
+
 def load_users():
-    # Return all users as a list of dicts (excluding _id)
-    return list(users_collection.find({}, {"_id": 0}))
+    if USE_MONGO and users_collection is not None:
+        return list(users_collection.find({}, {"_id": 0}))
+    # Fallback to JSON
+    try:
+        with open(USERS_FILE) as f:
+            return json.load(f)
+    except:
+        return []
 
 def save_users(data):
-    # Replace all users (for compatibility, not recommended for production)
-    users_collection.delete_many({})
-    if data:
-        users_collection.insert_many(data)
-
+    if USE_MONGO and users_collection is not None:
+        users_collection.delete_many({})
+        if data:
+            users_collection.insert_many(data)
+        return
+    # Fallback to JSON
+    os.makedirs(DATA_DIR, exist_ok=True)
+    with open(USERS_FILE, "w") as f:
+        json.dump(data, f, indent=4)
 
 def normalize_users(users):
     unique_users = []
     seen_usernames = set()
-
     for user in users:
         username = user.get("username", "").strip()
         if not username:
             continue
-
         username_key = username.lower()
         if username_key in seen_usernames:
             continue
-
         seen_usernames.add(username_key)
         unique_users.append({
             "username": username,
             "password": user.get("password", "")
         })
-
     return unique_users
 
 def load_plans():
+    if USE_MONGO and plans_collection is not None:
+        return list(plans_collection.find({}, {"_id": 0}))
     try:
         with open(PLANS_FILE) as f:
             return json.load(f)
@@ -169,12 +205,22 @@ def load_plans():
         return []
 
 def save_plans(data):
+    if USE_MONGO and plans_collection is not None:
+        plans_collection.delete_many({})
+        if data:
+            plans_collection.insert_many(data)
+        return
     os.makedirs(DATA_DIR, exist_ok=True)
     with open(PLANS_FILE, "w") as f:
         json.dump(data, f, indent=4)
 
-
 def load_user_stats():
+    if USE_MONGO and user_stats_collection is not None:
+        # Store as a single document with key-value pairs
+        doc = user_stats_collection.find_one({"_id": "user_stats"})
+        if doc and "data" in doc:
+            return doc["data"]
+        return {}
     try:
         with open(USER_STATS_FILE) as f:
             data = json.load(f)
@@ -182,8 +228,10 @@ def load_user_stats():
     except:
         return {}
 
-
 def save_user_stats(data):
+    if USE_MONGO and user_stats_collection is not None:
+        user_stats_collection.replace_one({"_id": "user_stats"}, {"_id": "user_stats", "data": data}, upsert=True)
+        return
     os.makedirs(DATA_DIR, exist_ok=True)
     with open(USER_STATS_FILE, "w") as f:
         json.dump(data, f, indent=4)
@@ -767,22 +815,26 @@ def signup():
         print("[DEBUG] Received POST to /signup")
         print("[DEBUG] Form data:", dict(request.form))
         username = request.form["username"].strip().lower()
+        password = request.form["password"]
 
         # Enforce email-only usernames
         if not is_valid_email(username):
             print("[DEBUG] Invalid email format (signup):", username)
             return render_template("signup.html", error="Please enter a valid email address as your username.")
 
-        # Check if user exists in MongoDB
-        if users_collection.find_one({"username": username}):
-            print("[DEBUG] Email already registered:", username)
-            return render_template("signup.html", error="That email is already registered.")
+        # Check if user already exists
+        if USE_MONGO and users_collection is not None:
+            if users_collection.find_one({"username": username}):
+                return render_template("signup.html", error="That email is already registered.")
+            users_collection.insert_one({"username": username, "password": password})
+        else:
+            users = load_users()
+            if any(u["username"] == username for u in users):
+                return render_template("signup.html", error="That email is already registered.")
+            users.append({"username": username, "password": password})
+            save_users(users)
 
-        users_collection.insert_one({
-            "username": username,
-            "password": request.form["password"]
-        })
-        print("[DEBUG] Adding new user:", username)
+        print(f"[DEBUG] Registered new user: {username}")
         return redirect("/login")
     return render_template("signup.html")
 
@@ -796,18 +848,22 @@ def login():
 
     if request.method == "POST":
         login_email = request.form.get("username", "").strip().lower()
+        password = request.form.get("password", "")
         # Enforce email-only usernames on login
         if not is_valid_email(login_email):
             print("[DEBUG] Invalid email format (login):", login_email)
             return render_template("login.html", error="Please enter a valid email address as your username.")
 
-        user = users_collection.find_one({
-            "username": login_email,
-            "password": request.form["password"]
-        })
-        if user:
-            session["user"] = user["username"]
-            # Keep buddy email synced to the identity used to log in.
+        # Check user in MongoDB or JSON
+        user = None
+        if USE_MONGO and users_collection is not None:
+            user = users_collection.find_one({"username": login_email})
+        else:
+            users = load_users()
+            user = next((u for u in users if u["username"] == login_email), None)
+
+        if user and user.get("password") == password:
+            session["user"] = login_email
             update_user_stats(session["user"], {"buddy_email": session["user"]})
             return redirect(url_for("dashboard", auth="1"))
         return render_template("login.html", error="Invalid username or password.")
@@ -883,11 +939,15 @@ def input_page():
             key=lambda s: {"hard": 0, "medium": 1, "easy": 2}.get(str(s.get("difficulty", "easy")).lower(), 2)
         )
 
+        # generate_schedule(subjects, time_slots, end_time, study_minutes, break_minutes)
+        # Assuming end_time is the last time slot's end, or a default if not present
+        end_time = time_slots[-1][1] if time_slots else 20
         schedule = generate_schedule(
             subjects,
             time_slots,
-            study_minutes=study_minutes,
-            break_minutes=break_minutes
+            end_time,
+            study_minutes,
+            break_minutes
         )
 
         recovery = build_recovery_plan(session.get("user"), sleep_start, sleep_end)
@@ -1526,4 +1586,11 @@ def analytics_domain_hit():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=int(os.getenv("PORT", 5000)), debug=False)
+    import sys
+    port = int(os.environ.get("PORT", 5000))
+    if len(sys.argv) > 1:
+        try:
+            port = int(sys.argv[1])
+        except ValueError:
+            pass
+    app.run(host="0.0.0.0", port=port)
