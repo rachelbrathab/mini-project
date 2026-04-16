@@ -14,6 +14,15 @@ import zipfile
 from datetime import datetime, timedelta, date
 from collections import Counter
 from pymongo import MongoClient
+import logging
+import traceback
+
+app.logger.setLevel(logging.DEBUG)
+
+@app.errorhandler(Exception)
+def handle_exception(e):
+    app.logger.error(traceback.format_exc())
+    return "Internal Server Error", 500
 
 
 
