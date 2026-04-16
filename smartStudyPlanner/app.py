@@ -17,17 +17,15 @@ from pymongo import MongoClient
 import logging
 import traceback
 
+app = Flask(__name__)
+app.secret_key = os.getenv("FLASK_SECRET_KEY", "secret123")
+
 app.logger.setLevel(logging.DEBUG)
 
 @app.errorhandler(Exception)
 def handle_exception(e):
     app.logger.error(traceback.format_exc())
     return "Internal Server Error", 500
-
-
-
-app = Flask(__name__)
-app.secret_key = os.getenv("FLASK_SECRET_KEY", "secret123")
 
 # --- MongoDB Setup ---
 load_dotenv()
