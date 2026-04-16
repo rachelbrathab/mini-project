@@ -13,7 +13,7 @@ import io
 import zipfile
 from datetime import datetime, timedelta, date
 from collections import Counter
-from pymongo import MongoClient
+
 import logging
 import traceback
 
@@ -27,28 +27,7 @@ def handle_exception(e):
     app.logger.error(traceback.format_exc())
     return "Internal Server Error", 500
 
-# --- MongoDB Setup ---
-load_dotenv()
-MONGO_URI = os.getenv("MONGO_URI")
-USE_MONGO = False
-users_collection = None
-plans_collection = None
-user_stats_collection = None
-try:
-    if MONGO_URI and MONGO_URI != "invalid":
-        client = MongoClient(MONGO_URI)
-        DB_NAME = os.getenv("MONGO_DB", "smart_study_planner")
-        db = client[DB_NAME]
-        users_collection = db["users"]
-        plans_collection = db["plans"]
-        user_stats_collection = db["user_stats"]
-        USE_MONGO = True
-        print(f"[DEBUG] Using MongoDB database: {DB_NAME}")
-    else:
-        print("[DEBUG] MONGO_URI not set or invalid, using JSON file storage.")
-except Exception as e:
-    print(f"[ERROR] Could not connect to MongoDB: {e}\nFalling back to JSON file storage.")
-    USE_MONGO = False
+
 
 
 # --- MongoDB Setup (DISCONNECTED for local testing) ---
@@ -165,9 +144,6 @@ DEFAULT_USER_STATS = {
 # --- MongoDB User Helpers ---
 
 def load_users():
-    if USE_MONGO and users_collection is not None:
-        return list(users_collection.find({}, {"_id": 0}))
-    # Fallback to JSON
     try:
         with open(USERS_FILE) as f:
             return json.load(f)
@@ -175,12 +151,6 @@ def load_users():
         return []
 
 def save_users(data):
-    if USE_MONGO and users_collection is not None:
-        users_collection.delete_many({})
-        if data:
-            users_collection.insert_many(data)
-        return
-    # Fallback to JSON
     os.makedirs(DATA_DIR, exist_ok=True)
     with open(USERS_FILE, "w") as f:
         json.dump(data, f, indent=4)
@@ -203,8 +173,6 @@ def normalize_users(users):
     return unique_users
 
 def load_plans():
-    if USE_MONGO and plans_collection is not None:
-        return list(plans_collection.find({}, {"_id": 0}))
     try:
         with open(PLANS_FILE) as f:
             return json.load(f)
@@ -212,22 +180,11 @@ def load_plans():
         return []
 
 def save_plans(data):
-    if USE_MONGO and plans_collection is not None:
-        plans_collection.delete_many({})
-        if data:
-            plans_collection.insert_many(data)
-        return
     os.makedirs(DATA_DIR, exist_ok=True)
     with open(PLANS_FILE, "w") as f:
         json.dump(data, f, indent=4)
 
 def load_user_stats():
-    if USE_MONGO and user_stats_collection is not None:
-        # Store as a single document with key-value pairs
-        doc = user_stats_collection.find_one({"_id": "user_stats"})
-        if doc and "data" in doc:
-            return doc["data"]
-        return {}
     try:
         with open(USER_STATS_FILE) as f:
             data = json.load(f)
@@ -236,9 +193,6 @@ def load_user_stats():
         return {}
 
 def save_user_stats(data):
-    if USE_MONGO and user_stats_collection is not None:
-        user_stats_collection.replace_one({"_id": "user_stats"}, {"_id": "user_stats", "data": data}, upsert=True)
-        return
     os.makedirs(DATA_DIR, exist_ok=True)
     with open(USER_STATS_FILE, "w") as f:
         json.dump(data, f, indent=4)
@@ -829,17 +783,12 @@ def signup():
             print("[DEBUG] Invalid email format (signup):", username)
             return render_template("signup.html", error="Please enter a valid email address as your username.")
 
-        # Check if user already exists
-        if USE_MONGO and users_collection is not None:
-            if users_collection.find_one({"username": username}):
-                return render_template("signup.html", error="That email is already registered.")
-            users_collection.insert_one({"username": username, "password": password})
-        else:
-            users = load_users()
-            if any(u["username"] == username for u in users):
-                return render_template("signup.html", error="That email is already registered.")
-            users.append({"username": username, "password": password})
-            save_users(users)
+
+        users = load_users()
+        if any(u["username"] == username for u in users):
+            return render_template("signup.html", error="That email is already registered.")
+        users.append({"username": username, "password": password})
+        save_users(users)
 
         print(f"[DEBUG] Registered new user: {username}")
         return redirect("/login")
@@ -861,13 +810,8 @@ def login():
             print("[DEBUG] Invalid email format (login):", login_email)
             return render_template("login.html", error="Please enter a valid email address as your username.")
 
-        # Check user in MongoDB or JSON
-        user = None
-        if USE_MONGO and users_collection is not None:
-            user = users_collection.find_one({"username": login_email})
-        else:
-            users = load_users()
-            user = next((u for u in users if u["username"] == login_email), None)
+        users = load_users()
+        user = next((u for u in users if u["username"] == login_email), None)
 
         if user and user.get("password") == password:
             session["user"] = login_email
